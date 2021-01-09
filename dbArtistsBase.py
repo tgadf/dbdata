@@ -17,6 +17,7 @@ class dbArtistsBase:
         self.primary      = True
         self.credit       = False
         self.extra        = False
+        self.unofficial   = False
             
         #######################
         ## General Imports
@@ -34,17 +35,25 @@ class dbArtistsBase:
         
         
     def setCredit(self):
-        self.credit  = True
-        self.primary = False
-        self.extra   = False
-    def setExtra(self):
-        self.extra   = True
-        self.credit  = False
-        self.primary = False
+        self.credit     = True
+        self.primary    = False
+        self.extra      = False
+        self.unofficial = False
     def setPrimary(self):
-        self.primary = True
-        self.credit  = False
-        self.extra   = False
+        self.credit     = False
+        self.primary    = True
+        self.extra      = False
+        self.unofficial = False
+    def setExtra(self):
+        self.credit     = False
+        self.primary    = False
+        self.extra      = True
+        self.unofficial = False
+    def setUnofficial(self):
+        self.credit     = False
+        self.primary    = False
+        self.extra      = False
+        self.unofficial = True
         
         
         
@@ -95,6 +104,8 @@ class dbArtistsBase:
             dirVal = setDir(dirVal, "credit")
         elif self.extra is True:
             dirVal = setDir(dirVal, "extra")
+        elif self.unofficial is True:
+            dirVal = setDir(dirVal, "unofficial")
         return dirVal
     
     

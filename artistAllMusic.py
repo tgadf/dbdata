@@ -3,11 +3,13 @@ from artistDBBase import artistDBNameClass, artistDBMetaClass, artistDBIDClass, 
 from artistDBBase import artistDBProfileClass, artistDBMediaClass, artistDBMediaAlbumClass
 from artistDBBase import artistDBMediaDataClass, artistDBMediaCountsClass
 from strUtils import fixName
+from dbUtils import utilsAllMusic
 
 
 class artistAllMusic(artistDBBase):
     def __init__(self, debug=False):
         super().__init__(debug)
+        self.dbUtils = utilsAllMusic()
         
         
     ##############################################################################################################################
@@ -111,8 +113,14 @@ class artistAllMusic(artistDBBase):
 
     ##############################################################################################################################
     ## Artist ID
-    ##############################################################################################################################                
+    ##############################################################################################################################
     def getID(self, suburl):
+        discID = self.dbUtils.getArtistID(suburl.url)
+        aic = artistDBIDClass(ID=discID)
+        return aic
+    
+    
+        
         ival = "/artist"
         if isinstance(suburl, artistDBURLClass):
             suburl = suburl.url

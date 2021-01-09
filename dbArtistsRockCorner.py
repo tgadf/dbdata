@@ -1,7 +1,7 @@
 from dbArtistsBase import dbArtistsBase
 from dbBase import dbBase
-from artistRC import artistRC
-from dbUtils import rockcornerUtils
+from artistRockCorner import artistRockCorner
+from dbUtils import utilsRockCorner
 import urllib
 from urllib.parse import quote
 from webUtils import getHTML
@@ -12,18 +12,18 @@ from hashlib import md5
 ##################################################################################################################
 # Base Class
 ##################################################################################################################
-class dbArtistsRockCorner(dbArtistsBase):
+class dbArtistsRockCorner:
     def __init__(self, debug=False):
         self.db     = "RockCorner"
         self.disc   = dbBase(self.db.lower())
-        self.artist = artistRC(self.disc)
-        self.dutils = rockcornerUtils()
+        self.artist = artistRockCorner(self.disc)
+        self.dutils = utilsRockCorner(self.disc)
         self.debug  = debug
         
         self.baseURL   = "https://www.therockcorner.com/"
         self.searchURL = "https://www.therockcorner.com/"
-        
-        super().__init__(self.db, self.disc, self.artist, self.dutils, debug=debug)
+
+        self.ignores = {}
 
 
         
@@ -93,7 +93,7 @@ class dbArtistsRockCorner(dbArtistsBase):
             if isFile(savename):
                 continue
 
-            self.downloadArtistURL(url, savename)
+            self.dutils.downloadArtistURL(url, savename)
             
     
     def getSearchArtistURL(self, artist):

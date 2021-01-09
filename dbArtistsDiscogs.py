@@ -1,7 +1,6 @@
-from dbArtistsBase import dbArtistsBase
+from artistDiscogs import artistDiscogs
+from dbUtils import utilsDiscogs
 from dbBase import dbBase
-from artistDC import artistDC
-from dbUtils import discogsUtils
 import urllib
 from urllib.parse import quote
 from webUtils import getHTML
@@ -11,18 +10,34 @@ from fsUtils import isFile
 ##################################################################################################################
 # Base Class
 ##################################################################################################################
-class dbArtistsDiscogs(dbArtistsBase):
+class dbArtistsDiscogs:
     def __init__(self, debug=False):
         self.db     = "Discogs"
         self.disc   = dbBase(self.db.lower())
-        self.artist = artistDC(self.disc)
-        self.dutils = discogsUtils()
+        self.artist = artistDiscogs(self.disc)
+        self.dutils = utilsDiscogs(self.disc)
         self.debug  = debug
         
         self.baseURL   = "https://www.discogs.com/"
         self.searchURL = "https://www.discogs.com/search/"
+
+        self.ignores = {}
         
-        super().__init__(self.db, self.disc, self.artist, self.dutils, debug=debug)
+
+    
+    ##################################################################################################################
+    #
+    # Ignores
+    #
+    ##################################################################################################################
+    def isIgnore(self, url, name, useURL=True, useName=False):
+        if useName is True:
+            if url in list(self.ignores.values()):
+                return True
+        elif useURL is True:
+            if url in list(self.ignores.keys()):
+                return True
+        return False
 
 
         

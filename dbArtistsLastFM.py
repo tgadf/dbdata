@@ -1,32 +1,28 @@
-from dbArtistsBase import dbArtistsBase
+from artistLastFM import artistLastFM
+from dbUtils import utilsLastFM
 from dbBase import dbBase
-from artistLM import artistLM
-from dbUtils import lastfmUtils
 import urllib
 from urllib.parse import quote
 from webUtils import getHTML
-from fsUtils import isFile, setFile
-from multiArtist import multiartist
-from ioUtils import getFile
-from time import sleep
+from fsUtils import isFile
 
 
 
 ##################################################################################################################
 # Base Class
 ##################################################################################################################
-class dbArtistsLastFM(dbArtistsBase):
+class dbArtistsLastFM:
     def __init__(self, debug=False):
         self.db     = "LastFM"
         self.disc   = dbBase(self.db.lower())
-        self.artist = artistLM(self.disc)
-        self.dutils = lastfmUtils()
+        self.artist = artistLastFM(self.disc)
+        self.dutils = utilsLastFM(self.disc)
         self.debug  = debug
         
-        self.baseURL       = "https://www.last.fm/"
+        self.baseURL   = "https://www.last.fm/"
         self.searchURL = "https://www.last.fm/search/" #artists?q=Ariana+Grande
-        
-        super().__init__(self.db, self.disc, self.artist, self.dutils, debug=debug)
+
+        self.ignores = {}
 
 
         
@@ -66,6 +62,7 @@ class dbArtistsLastFM(dbArtistsBase):
     ##################################################################################################################
     def parseSearchArtist(self, artist, data, force=False):
         if data is None:
+            print("Data is None!")
             return None
         
         ## Parse data
@@ -104,15 +101,16 @@ class dbArtistsLastFM(dbArtistsBase):
             name     = hrefData["Name"]
             discID   = self.dutils.getArtistID(name)
             url      = self.getArtistURL(href)
-            savename = self.getArtistSavename(discID)
+            savename = self.dutils.getArtistSavename(discID)
 
-            print(iArtist,'/',len(artistDB),'\t:',discID,'\t',url)
+            print(iArtist,'/',len(artistDB),'\t:',discID,'\t','\t',name,'\t',url)
+            continue
             
             if isFile(savename):
                 if force is False:
                     continue
 
-            self.downloadArtistURL(url, savename, force=force)
+            self.dutils.downloadArtistURL(url, savename, force=force)
             
     
     def getSearchArtistURL(self, artist):
@@ -128,7 +126,7 @@ class dbArtistsLastFM(dbArtistsBase):
             raise ValueError("URL is None!")
                     
         ## Download data
-        data, response = self.downloadURL(url)
+        data, response = self.dutils.downloadURL(url)
         if response != 200:
             print("Error downloading {0}".format(url))
             return False

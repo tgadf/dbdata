@@ -4,14 +4,14 @@ from artistDBBase import artistDBProfileClass, artistDBMediaClass, artistDBMedia
 from artistDBBase import artistDBMediaDataClass, artistDBMediaCountsClass
 from strUtils import fixName
 import json
-from dbUtils import lastfmUtils
+from dbUtils import utilsLastFM
 from hashlib import md5
 
 
 class artistLastFM(artistDBBase):
     def __init__(self, debug=False):
         super().__init__(debug)
-        self.dutils = lastfmUtils()
+        self.dutils = utilsLastFM()
         
         
     ##############################################################################################################################
@@ -24,7 +24,7 @@ class artistLastFM(artistDBBase):
         artist      = self.getName()
         meta        = self.getMeta()
         url         = self.getURL()
-        ID          = self.getID(url)
+        ID          = self.getID(url.url)
         pages       = self.getPages()
         profile     = self.getProfile()        
         media       = self.getMedia(artist)
@@ -110,21 +110,13 @@ class artistLastFM(artistDBBase):
 
     ##############################################################################################################################
     ## Artist ID
-    ##############################################################################################################################                
-    def getID(self, url):
-        url  = url.url
-        name = url.split("/+albums")[0]
-        if name.endswith("/"):
-            name = url[:-1]
-        if name is None:
-            aic = artistDBIDClass(ID=None, err="NoName")
-            return aic
-        m = md5()
-        for val in name.split(" "):
-            m.update(val.encode('utf-8'))
-        hashval = m.hexdigest()
-        discID  = str(int(hashval, 16) % int(1e11))
-        aic = artistDBIDClass(ID=discID)
+    ##############################################################################################################################
+    def getID(self, url):        
+        artistID = self.dutils.getArtistID(url)
+        if artistID is not None:
+            aic = artistDBIDClass(ID=artistID)
+        else:
+            aic = artistDBIDClass(ID=None, err="NoID")
         return aic
 
 
@@ -202,7 +194,7 @@ class artistLastFM(artistDBBase):
     
     ##############################################################################################################################
     ## Artist Media
-    ##############################################################################################################################    
+    ############################################################################################################################## 
     def getMediaAlbum(self, td):
         amac = artistDBMediaAlbumClass()
         for span in td.findAll("span"):
