@@ -279,9 +279,9 @@ class utilsRockCorner(utilsBase):
     
 
 ################################################################################################################
-# RateYourMusic
+# MusicStack
 ################################################################################################################
-class utilsRateYourMusic(utilsBase):
+class utilsMusicStack(utilsBase):
     def __init__(self, disc=None):
         super().__init__(disc)
         
@@ -307,6 +307,36 @@ class utilsMusicStack(utilsBase):
         
         
     def getArtistID(self, name, debug=False):
+        div = self.bsdata.find("div", {"class": "artist_name"})
+        if div is None:
+            aic = artistRMIDClass(err="NotArtist")            
+            return aic
+
+        inp = div.find("input")
+        if inp is None:
+            aic = artistRMIDClass(err="NoInput")            
+            return aic
+
+        try:
+            value = inp.attrs['value']
+        except:
+            aic = artistRMIDClass(err="NoInputValue")            
+            return aic
+
+        if value.startswith("[Artist") and value.endswith("]"):
+            try:
+                discID = str(int(value[7:-1]))
+            except:
+                aic = artistRMIDClass(err="NotInt")            
+                return aic
+        else:
+            aic = artistRMIDClass(err="NotInt")            
+            return aic
+        
+
+        aic = artistRMIDClass(ID=discID)
+        return aic        
+        
         raise ValueError("This isn't ready yet!")
         if name is None:
             return None
