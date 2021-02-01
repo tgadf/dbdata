@@ -114,6 +114,10 @@ class utilsAllMusic(utilsBase):
                 print("Could not find discID in {0}".format(suburl))
             return None
 
+        data = href[pos+len(ival)+1:]
+        pos  = data.rfind("-")
+        artistIDURL = data[(pos+3):]       
+        artistID = artistIDURL.split("/")[0]
         try:
             data = href[pos+len(ival)+1:]
             pos  = data.rfind("-")
@@ -194,7 +198,7 @@ class utilsDiscogs(utilsBase):
             return None
         
         try:
-            data = suburl[pos+len(ival)+1:]
+            data = href[pos+len(ival)+1:]
             pos  = data.find("-")
             artistID = data[:pos]
         except:
