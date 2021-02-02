@@ -37,10 +37,12 @@ class dbArtistsLastFM:
             baseURL = self.baseURL
             if artistRef.startswith("/") is True:
                 #print("Join", end="\t")
-                url     = urllib.parse.urljoin(baseURL, quote(artistRef[1:]))
+                #url     = urllib.parse.urljoin(baseURL, quote(artistRef[1:]))
+                url     = urllib.parse.urljoin(baseURL, artistRef[1:])
                 #print(url)
             else:
-                url     = urllib.parse.urljoin(baseURL, quote(artistRef))
+                #url     = urllib.parse.urljoin(baseURL, quote(artistRef))
+                url     = urllib.parse.urljoin(baseURL, artistRef)
             #print(url)
                 
             if url.endswith("/") is False:
@@ -60,7 +62,7 @@ class dbArtistsLastFM:
     ##################################################################################################################
     # Search Functions
     ##################################################################################################################
-    def parseSearchArtist(self, artist, data, force=False):
+    def parseSearchArtist(self, artist, data, maxArtists=99, force=False, debug=False):
         if data is None:
             print("Data is None!")
             return None
@@ -69,26 +71,31 @@ class dbArtistsLastFM:
         bsdata = getHTML(data)
         
         artistDB  = {}
-        
         uls = bsdata.findAll("ul", {"class": "artist-results"})
         for ul in uls:
             lis = ul.findAll("li", {"class": "artist-result"})
             for li in lis:
                 h4 = li.find("h4")
                 if h4 is None:
-                    raise ValueError("No h4 in list")
+                    print("No artist information here!")
+                    continue
                 ref = h4.find('a')
                 if ref is None:
-                    raise ValueError("No ref in h4")
-
-                name = ref.attrs['title']
-                url  = ref.attrs['href']
-                artistID = self.dutils.getArtistID(name)
+                    print("No artist link information here")
+                    continue
+                attrs = ref.attrs
+                href  = attrs['href']
+                title = attrs['title']
+                text  = ref.text
+                artistID = self.dutils.getArtistID(href)                
+                
+                if self.debug:
+                    print("[{0}]  ,  [{1}]  ,  [{2}]  ,  [{3}]".format(text, artistID, href, title))
         
                 #print(name,'\t',url,'\t',artistID)
-                if artistDB.get(url) is None:
-                    artistDB[url] = {"N": 0, "Name": name}
-                artistDB[url]["N"] += 1
+                if artistDB.get(href) is None:
+                    artistDB[href] = {"N": 0, "Name": title}
+                artistDB[href]["N"] += 1
         
     
         if self.debug:
@@ -97,14 +104,15 @@ class dbArtistsLastFM:
         iArtist = 0
         for href, hrefData in artistDB.items():
             iArtist += 1
+            if iArtist > maxArtists:
+                break
         
-            name     = hrefData["Name"]
-            discID   = self.dutils.getArtistID(name)
+            artistID = self.dutils.getArtistID(href)
             url      = self.getArtistURL(href)
-            savename = self.dutils.getArtistSavename(discID)
+            savename = self.dutils.getArtistSavename(artistID)
+            name     = hrefData['Name']
 
-            print(iArtist,'/',len(artistDB),'\t:',discID,'\t','\t',name,'\t',url)
-            continue
+            print(iArtist,'/',len(artistDB),'\t:',artistID,'\t',name,'\t',href)
             
             if isFile(savename):
                 if force is False:
@@ -114,12 +122,12 @@ class dbArtistsLastFM:
             
     
     def getSearchArtistURL(self, artist):
-        baseURL = self.searchURL    
+        baseURL = self.searchURL
         url = urllib.parse.urljoin(baseURL, "{0}{1}".format("artists?q=", quote(artist))) 
         return url
     
         
-    def searchForArtist(self, artist, force=False):
+    def searchForArtist(self, artist, maxArtists=99, force=False, debug=False):
         print("\n\n===================== Searching For {0} =====================".format(artist))
         url = self.getSearchArtistURL(artist)
         if url is None:
@@ -131,7 +139,7 @@ class dbArtistsLastFM:
             print("Error downloading {0}".format(url))
             return False
 
-        self.parseSearchArtist(artist, data, force)
+        self.parseSearchArtist(artist, data, maxArtists, force, debug)
                 
         
     

@@ -12,18 +12,18 @@ from hashlib import md5
 ##################################################################################################################
 # Base Class
 ##################################################################################################################
-class dbArtistsAceBootlegs(dbArtistsBase):
+class dbArtistsAceBootlegs:
     def __init__(self, debug=False):
         self.db     = "AceBootlegs"
         self.disc   = dbBase(self.db.lower())
         self.artist = artistAB(self.disc)
-        self.dutils = acebootlegsUtils()
+        self.dutils = acebootlegsUtils(self.disc)
         self.debug  = debug
         
         self.baseURL   = "https://ace-bootlegs.com/"
         self.searchURL = "https://ace-bootlegs.com/"
-        
-        super().__init__(self.db, self.disc, self.artist, self.dutils, debug=debug)
+
+        self.ignores = {}
 
 
         

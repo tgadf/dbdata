@@ -225,6 +225,7 @@ class utilsLastFM(utilsBase):
     def __init__(self, disc=None):
         super().__init__(disc)
         self.baseURL = "https://www.last.fm/music/"
+        self.relURL  = "/music/"
         
         
     def quoteIt(self, href, debug=False):
@@ -241,13 +242,17 @@ class utilsLastFM(utilsBase):
         if href.startswith(self.baseURL):
             if debug:
                 print("Removing {0} from url --> {1}".format(self.baseURL,href))
-            href = href[len(self.baseURL):]
+            href = href[len(self.baseURL):]        
+        if href.startswith(self.relURL):
+            if debug:
+                print("Removing {0} from url --> {1}".format(self.relURL,href))
+            href = href[len(self.relURL):]
         name = href.split("/+albums")[0]
         if name.endswith("/"):
             name = href[:-1]
         if debug:
             print("Raw URL: {0}".format(name))
-        name = self.quoteIt(name, debug=debug)
+        #name = self.quoteIt(name, debug=debug)
         if debug:
             print("Raw URL (Post Quote): {0}".format(name))
         if name is None:
@@ -305,55 +310,57 @@ class utilsMusicStack(utilsBase):
 ################################################################################################################
 # RateYourMusic
 ################################################################################################################
-class utilsMusicStack(utilsBase):
+class utilsRateYourMusic(utilsBase):
     def __init__(self, disc=None):
         super().__init__(disc)
         
         
     def getArtistID(self, name, debug=False):
-        div = self.bsdata.find("div", {"class": "artist_name"})
-        if div is None:
-            aic = artistRMIDClass(err="NotArtist")            
-            return aic
-
-        inp = div.find("input")
-        if inp is None:
-            aic = artistRMIDClass(err="NoInput")            
-            return aic
-
-        try:
-            value = inp.attrs['value']
-        except:
-            aic = artistRMIDClass(err="NoInputValue")            
-            return aic
-
-        if value.startswith("[Artist") and value.endswith("]"):
-            try:
-                discID = str(int(value[7:-1]))
-            except:
-                aic = artistRMIDClass(err="NotInt")            
-                return aic
-        else:
-            aic = artistRMIDClass(err="NotInt")            
-            return aic
-        
-
-        aic = artistRMIDClass(ID=discID)
-        return aic        
-        
-        raise ValueError("This isn't ready yet!")
-        if name is None:
-            return None
         m = md5()
         for val in name.split(" "):
             m.update(val.encode('utf-8'))
         hashval = m.hexdigest()
-        artistID  = str(int(hashval, 16) % int(1e9))
+        artistID  = str(int(hashval, 16) % int(1e10))
         return artistID
     
 
 ################################################################################################################
-# RateYourMusic
+# Deezer
+################################################################################################################
+class utilsDeezer(utilsBase):
+    def __init__(self, disc=None):
+        super().__init__(disc)
+        
+        
+    def getArtistID(self, url, debug=False):
+        artistID = url.split("/")[-1]
+        try:
+            str(int(artistID))
+        except:
+            print("Could not determine artistID from URL {0}".format(url))
+        
+        return artistID
+    
+
+################################################################################################################
+# AppleMusic
+################################################################################################################
+class utilsAppleMusic(utilsBase):
+    def __init__(self, disc=None):
+        super().__init__(disc)
+        
+        
+    def getArtistID(self, name, debug=False):
+        m = md5()
+        for val in name.split(" "):
+            m.update(val.encode('utf-8'))
+        hashval = m.hexdigest()
+        artistID  = str(int(hashval, 16) % int(1e10))
+        return artistID
+    
+
+################################################################################################################
+# CDandLP
 ################################################################################################################
 class utilsCDandLP(utilsBase):
     def __init__(self, disc=None):

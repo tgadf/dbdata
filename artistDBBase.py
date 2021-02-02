@@ -147,7 +147,7 @@ class artistDBDataClass:
         
         
     def show(self):
-        print("AllMusic Artist Data Class")
+        print("Artist Data Class")
         print("-------------------------")
         print("Artist:  {0}".format(self.artist.name))
         print("Meta:    {0}".format(self.meta.title))

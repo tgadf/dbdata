@@ -1,31 +1,27 @@
-from dbArtistsBase import dbArtistsBase
+from artistRateYourMusic import artistRateYourMusic
+from dbUtils import utilsRateYourMusic
 from dbBase import dbBase
-from artistRM import artistRM
-from dbUtils import rateyourmusicUtils
 import urllib
 from urllib.parse import quote
 from webUtils import getHTML
 from fsUtils import isFile, setDir
-from ioUtils import getFile, saveFile
 from searchUtils import findPatternExt
-from hashlib import md5
+from ioUtils import getFile, saveFile
 
 
 ##################################################################################################################
 # Base Class
 ##################################################################################################################
-class dbArtistsRateYourMusic(dbArtistsBase):
+class dbArtistsRateYourMusic:
     def __init__(self, debug=False):
         self.db     = "RateYourMusic"
         self.disc   = dbBase(self.db.lower())
-        self.artist = artistRM(self.disc)
-        self.dutils = rateyourmusicUtils()
+        self.artist = artistRateYourMusic(self.disc)
+        self.dutils = utilsRateYourMusic(self.disc)
         self.debug  = debug
         
-        self.baseURL   = "https://rateyourmusic.com/"
-        self.searchURL = "https://rateyourmusic.com/search?"
-        
-        super().__init__(self.db, self.disc, self.artist, self.dutils, debug=debug)
+        self.baseURL   = "https://www.allmusic.com/"        
+        self.searchURL = "https://www.allmusic.com/search/"
 
 
         
@@ -54,10 +50,9 @@ class dbArtistsRateYourMusic(dbArtistsBase):
         artistDir = self.disc.getArtistsDir()
         dataDir   = setDir(artistDir, "data")
         files     = findPatternExt(dataDir, pattern="Rate Your Music", ext=".html")
-        #"/Volumes/Biggy/Discog/artists-rateyourmusic/data/", pattern="Rate Your Music", ext=".html")
         for ifile in files:
             htmldata = getFile(ifile)
-            retval   = self.getData(ifile)
+            retval   = self.artist.getData(ifile)
             artistID = retval.ID.ID
-            savename = self.getArtistSavename(artistID)
-            saveFile(idata=htmldata, ifile=savename, debug=True)
+            savename = self.dutils.getArtistSavename(artistID)
+            saveFile(idata=htmldata, ifile=savename, debug=False)

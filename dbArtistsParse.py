@@ -38,6 +38,8 @@ class dbArtistsPrimary(dbArtistsBase):
         if newData > 0:
             self.saveDBData(modVal, dbdata, newData)
             
+        return newData > 0
+            
  
         
 #################################################################################################################################
@@ -141,6 +143,8 @@ class dbArtistsUnofficial(dbArtistsBase):
             
         if newData > 0:
             self.saveDBData(modVal, dbdata, newData)
+            
+        return newData > 0
                 
                 
     
@@ -203,7 +207,23 @@ class dbArtistsExtra(dbArtistsBase):
         if newData > 0:
             self.saveDBData(modVal, dbdata, newData)
             
+        return newData > 0
+
+
+#################################################################################################################################
+#
+# Parse From Raw HTML
+#
+#################################################################################################################################
+class dbArtistsRawHTML(dbArtistsBase):
+    def __init__(self, dbArtists):        
+        super().__init__(dbArtists)
+        self.setPrimary()
+        self.dbArtists = dbArtists
             
+    def parse(self):
+        self.dbArtists.parseDownloadedFiles()
+
             
 
 #################################################################################################################################

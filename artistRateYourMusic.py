@@ -1,18 +1,15 @@
 from artistDBBase import artistDBBase, artistDBDataClass
-from artistDBBase import artistDBNameClass, artistDBMetaClass, artistDBIDClass, artistDBURLClass, artistDBPageClass
+from artistDBBase import artistDBNameClass, artistDBMetaClass, artistDBIDClass, artistDBURLClass, artistDBURLInfo, artistDBPageClass
 from artistDBBase import artistDBProfileClass, artistDBMediaClass, artistDBMediaAlbumClass
 from artistDBBase import artistDBMediaDataClass, artistDBMediaCountsClass
 from strUtils import fixName
-import json
-from dbUtils import utilsLastFM
-from hashlib import md5
+from dbUtils import utilsRateYourMusic
 
 
-class artistLastFM(artistDBBase):
+class artistRateYourMusic(artistDBBase):
     def __init__(self, debug=False):
         super().__init__(debug)
-        self.dutils = utilsLastFM()
-        self.debug  = False
+        self.dbUtils = utilsRateYourMusic()
         
         
     ##############################################################################################################################
@@ -25,10 +22,10 @@ class artistLastFM(artistDBBase):
         artist      = self.getName()
         meta        = self.getMeta()
         url         = self.getURL()
-        ID          = self.getID(url.url)
+        ID          = self.getID(artist)
         pages       = self.getPages()
-        profile     = self.getProfile()        
-        media       = self.getMedia(artist)
+        profile     = self.getProfile()
+        media       = self.getMedia(artist, url)
         mediaCounts = self.getMediaCounts(media)
         
         err = [artist.err, meta.err, url.err, ID.err, pages.err, profile.err, mediaCounts.err, media.err]
@@ -43,29 +40,18 @@ class artistLastFM(artistDBBase):
     ## Artist Name
     ##############################################################################################################################
     def getName(self):
-        try:
-            artistdiv  = self.bsdata.find("script", {"id": 'initial-tealium-data'})
-            artistdata = artistdiv.attrs['data-tealium-data']
-        except:
-            artistdata = None
-            
-        if artistdata is None:
-            try:
-                artistdiv  = self.bsdata.find("div", {"id": "tlmdata"})
-                artistdata = artistdiv.attrs['data-tealium-data']
-            except:
-                anc = artistDBNameClass(name=None, err = "NoTealiumData")
-
-        
-        try:
-            artistvals = json.loads(artistdata)
-            artist     = artistvals["musicArtistName"]
-        except:
-            anc = artistDBNameClass(name=None, err="NoArtistName")
+        artistData = self.bsdata.find("h1", {"class": "artist_name_hdr"})
+        if artistData is None:
+            anc = artistDBNameClass(err="No H1")
             return anc
-
-
-        anc = artistDBNameClass(name=artist, err=None)
+        
+        artistName = artistData.text.strip()
+        if len(artistName) > 0:
+            artist = fixName(artistName)
+            anc = artistDBNameClass(name=artist, err=None)
+        else:
+            anc = artistDBNameClass(name=artist, err="Fix")
+        
         return anc
     
     
@@ -93,18 +79,18 @@ class artistLastFM(artistDBBase):
     ## Artist URL
     ##############################################################################################################################
     def getURL(self):
-        metalink = self.bsdata.find("meta", {"property": "og:url"})
-        if metalink is None:
-            auc = artistDBURLClass(err="NoLink")
+        artistData = self.bsdata.find("meta", {"property": "og:url"})
+        if artistData is None:
+            auc = artistDBURLClass(err=True)
             return auc
         
-        try:
-            url = metalink.attrs["content"]
-        except:
-            auc = artistDBURLClass(err="NoContent")
-            return auc
+        url = artistData.attrs["content"]
+        if url.find("/artist/") == -1:
+            url = None
+            auc = artistDBURLClass(url=url, err="NoArtist")
+        else:
+            auc = artistDBURLClass(url=url)
 
-        auc = artistDBURLClass(url=url)
         return auc
 
     
@@ -112,12 +98,9 @@ class artistLastFM(artistDBBase):
     ##############################################################################################################################
     ## Artist ID
     ##############################################################################################################################
-    def getID(self, url):        
-        artistID = self.dutils.getArtistID(url, debug=False)
-        if artistID is not None:
-            aic = artistDBIDClass(ID=artistID)
-        else:
-            aic = artistDBIDClass(ID=None, err="NoID")
+    def getID(self, artist):
+        discID = self.dbUtils.getArtistID(artist.name)
+        aic = artistDBIDClass(ID=discID)
         return aic
 
 
@@ -126,33 +109,7 @@ class artistLastFM(artistDBBase):
     ## Artist Pages
     ##############################################################################################################################
     def getPages(self):
-        pageData = self.bsdata.find("ul", {"class": "pagination-list"})
-        if pageData is None:
-            err = "pagination-list"
-            apc = artistDBPageClass(err=err)
-            return apc
-        
-        lis = pageData.findAll("li", {"class": "pagination-page"})
-        ppp = 20
-
-        if len(lis) > 1:
-            lastPage = self.getNamesAndURLs(lis[-1])
-            try:
-                tot = lastPage[0].name
-            except:
-                tot = None
-                #raise ValueError("Error getting last page from {0}".format(lastPage))
-                
-            try:
-                tot = int(tot)
-                apc   = artistDBPageClass(ppp=ppp, tot=tot, redo=False, more=True)
-            except:
-                tot = 1
-                apc   = artistDBPageClass(ppp=ppp, tot=tot, redo=False, more=False)
-
-        else:
-            tot = 1
-        
+        apc   = artistDBPageClass(ppp=1, tot=1, redo=False, more=False)
         return apc
     
     
@@ -160,33 +117,19 @@ class artistLastFM(artistDBBase):
     ##############################################################################################################################
     ## Artist Variations
     ##############################################################################################################################
-    def getProfile(self):              
-        data = {}
+    def getProfile(self):
+        data    = {}        
+        profile = self.bsdata.find("div", {"class": "artist_info"})
         
-        artistdiv  = self.bsdata.find("div", {"id": "tlmdata"})
-        if artistdiv is not None:
-            artistdata = artistdiv.attrs['data-tealium-data']
-        else:
-            artistdata = None
-    
-        if artistdata is not None:
-            try:
-                artistvals = json.loads(artistdata)
-                genres     = artistvals["tag"]
-            except:
-                genres     = None
-
-            if genres is not None:
-                genres = genres.split(",")
-            else:
-                genres = None
-        else:
-            genres = None
+        headers = profile.findAll("div", {"class": "info_hdr"})
+        content = profile.findAll("div", {"class": "info_content"})
         
-       
-        data["Profile"] = {'genre': genres, 'style': None}
+        headers = [x.text for x in headers]
+        content = [x.text for x in content]
+        
+        data = dict(zip(headers, content))
                
-        apc = artistDBProfileClass(profile=data.get("Profile"), aliases=data.get("Aliases"),
+        apc = artistDBProfileClass(profile=data.get("Formed"), aliases=data.get("Aliases"),
                                  members=data.get("Members"), groups=data.get("In Groups"),
                                  sites=data.get("Sites"), variations=data.get("Variations"))
         return apc
@@ -195,7 +138,7 @@ class artistLastFM(artistDBBase):
     
     ##############################################################################################################################
     ## Artist Media
-    ############################################################################################################################## 
+    ##############################################################################################################################
     def getMediaAlbum(self, td):
         amac = artistDBMediaAlbumClass()
         for span in td.findAll("span"):
@@ -219,75 +162,70 @@ class artistLastFM(artistDBBase):
         return amac
     
     
-    def getMedia(self, artist):
+    def getMedia(self, artist, url):
         amc  = artistDBMediaClass()
-        name = "Albums"
-        amc.media[name] = []
+
+        mediadatas = self.bsdata.findAll("div", {"id": "discography"})
+        for mediadata in mediadatas:
+            h3s        = mediadata.findAll("h3", {"class": "disco_header_label"})
+            categories = [x.text for x in h3s]
+
+            sufs    = mediadata.findAll("div", {"class": "disco_showing"})
+            spans   = [x.find("span") for x in sufs]
+            ids     = [x.attrs['id'] for x in spans]
+            letters = [x[-1] for x in ids]
+
+
+            for mediaType,suffix in dict(zip(categories, letters)).items():
+                categorydata = mediadata.find("div", {"id": "disco_type_{0}".format(suffix)})
+                albumdatas   = categorydata.findAll("div", {"class": "disco_release"})
+                for albumdata in albumdatas:
+                    
+                    ## Code
+                    codedata = albumdata.attrs['id']
+                    code     = codedata.split("_")[-1]
+                    try:
+                        int(code)
+                    except:
+                        code = None
+                        
+                    ## Title
+                    mainline = albumdata.find("div", {"class": "disco_mainline"})
+                    maindata = self.getNamesAndURLs(mainline)
+                    try:
+                        album = maindata[0].name
+                    except:
+                        album = None
+                        
+                    try:
+                        albumurl = maindata[0].url
+                    except:
+                        albumurl = None
+
+
+                    ## Year
+                    yeardata = albumdata.find("span", {"class": "disco_year_y"})
+                    if yeardata is None:
+                        yeardata = albumdata.find("span", {"class": "disco_year_ymd"})
+                        
+                    year     = None
+                    if yeardata is not None:
+                        year = yeardata.text
+
+                    ## Artists        
+                    artistdata   = albumdata.findAll("span")[-1]
+                    albumartists = self.getNamesAndURLs(artistdata)
+                    if len(albumartists) == 0:
+                        albumartists = [artistDBURLInfo(name=artist.name, url=url.url.replace("https://rateyourmusic.com", ""), ID=None)]
+
+
+                    amdc = artistDBMediaDataClass(album=album, url=albumurl, aclass=None, aformat=None, artist=albumartists, code=code, year=year)
+                    if amc.media.get(mediaType) is None:
+                        amc.media[mediaType] = []
+                    amc.media[mediaType].append(amdc)
+
         
-        mediaType = "Albums"
-
-        albumsection = self.bsdata.find("section", {"id": "artist-albums-section"})
-        if albumsection is None:
-            if self.debug:
-                print("\t\tNo Album Section!")
-            amc.media[mediaType] = []
-            return amc
-
-            
-            
-            raise ValueError("Cannot find album section!")
-            
         
-            
-        ols = albumsection.findAll("ol", {"class": "buffer-standard"}) # resource-list--release-list resource-list--release-list--with-20"})
-        if self.debug:
-            print("\t\tFound {0} Resource Lists".format(len(ols)))
-        for ol in ols:
-            lis = ol.findAll("li", {"class": "resource-list--release-list-item-wrap"})
-            for il, li in enumerate(lis):
-                h3 = li.find("h3", {"class": "resource-list--release-list-item-name"})
-                if h3 is None:
-                    if self.debug:
-                        print("\t\tNo <h3> in artist list section ({0}/{1}): {2}".format(il,len(lis), li))
-                    continue
-                    raise ValueError("No <h3> in artist list section ({0}/{1}): {2}".format(il,len(lis), li))
-                linkdata = self.getNamesAndURLs(h3)
-                if len(linkdata) == 0:
-                    continue
-                #print(linkdata[0].get())
-                
-                ## Name
-                album = linkdata[0].name
-
-                #amdc = artistDBMediaDataClass(album=album, url=url, aclass=None, aformat=None, artist=None, code=code, year=year)
-
-                ## URL
-                url = linkdata[0].url
-                
-                ## Code
-                code = self.dutils.getArtistID(album)
-                
-                ## Year
-                year = None
-                codedatas = li.findAll("p", {"class", "resource-list--release-list-item-aux-text"})
-                if len(codedatas) == 2:
-                    codedata = codedatas[1].text
-                    vals     = [x.strip() for x in codedata.split("\n")]
-                    if len(vals) == 5:
-                        try:
-                            year = vals[2][:-2]
-                            year = year.split()[-1]
-                            year = int(year)
-                        except:
-                            year = None
-                
-
-                amdc = artistDBMediaDataClass(album=album, url=url, aclass=None, aformat=None, artist=[artist.name], code=code, year=year)
-                if amc.media.get(mediaType) is None:
-                    amc.media[mediaType] = []
-                amc.media[mediaType].append(amdc)
-                if self.debug:
-                    print("\t\tAdding Media ({0} -- {1})".format(album, url))
 
         return amc
     
@@ -297,6 +235,7 @@ class artistLastFM(artistDBBase):
     ## Artist Media Counts
     ##############################################################################################################################
     def getMediaCounts(self, media):
+        
         amcc = artistDBMediaCountsClass()
         
         credittype = "Releases"

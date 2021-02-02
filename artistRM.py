@@ -207,7 +207,7 @@ class artistRM(dbBase):
     #######################################################################################################################################
     ## Artist ID
     #######################################################################################################################################
-    def getartistRMDiscID(self, suburl):
+    def getartistRMDiscID(self, name):
         div = self.bsdata.find("div", {"class": "artist_name"})
         if div is None:
             aic = artistRMIDClass(err="NotArtist")            
