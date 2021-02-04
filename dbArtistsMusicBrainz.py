@@ -63,7 +63,7 @@ class dbArtistsMusicBrainz:
     # Search Functions
     #
     ##################################################################################################################
-    def parseSearchArtist(self, artist, data, force=False):
+    def parseSearchArtist(self, artist, data, maxArtists=99, force=False, debug=False):
         if data is None:
             return None
         
@@ -96,17 +96,10 @@ class dbArtistsMusicBrainz:
             if iDown > 20:
                 break
             iArtist += 1
+            if iArtist > maxArtists:
+                break
 
             discID   = self.dutils.getArtistID(href)
-            
-            uuid = href.split('/')[-1]
-
-            m = md5()
-            for val in uuid.split("-"):
-                m.update(val.encode('utf-8'))
-            hashval = m.hexdigest()
-            discID  = str(int(hashval, 16))
-
             url      = self.getArtistURL(href)
             savename = self.dutils.getArtistSavename(discID)
 
@@ -127,16 +120,16 @@ class dbArtistsMusicBrainz:
         return url
     
         
-    def searchForArtist(self, artist, force=False):
+    def searchForArtist(self, artist, maxArtists=99, force=False, debug=False):
         print("\n\n===================== Searching For {0} =====================".format(artist))
         url = self.getSearchArtistURL(artist)
         if url is None:
             raise ValueError("URL is None!")
                     
         ## Download data
-        data, response = self.downloadURL(url)
+        data, response = self.dutils.downloadURL(url)
         if response != 200:
             print("Error downloading {0}".format(url))
             return False
 
-        self.parseSearchArtist(artist, data, force)
+        self.parseSearchArtist(artist, data, maxArtists, force, debug)

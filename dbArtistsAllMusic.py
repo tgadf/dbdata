@@ -60,7 +60,7 @@ class dbArtistsAllMusic:
     # Search Functions
     #
     ##################################################################################################################
-    def parseSearchArtist(self, artist, data, force=False):
+    def parseSearchArtist(self, artist, data, maxArtists=99, force=False, debug=False):
         if data is None:
             return None
         
@@ -96,6 +96,8 @@ class dbArtistsAllMusic:
         iArtist = 0
         for href, hrefData in artistDB.items():
             iArtist += 1
+            if iArtist > maxArtists:
+                break
         
             discID   = self.dutils.getArtistID(href)
             url      = self.getArtistURL(href)
@@ -116,7 +118,7 @@ class dbArtistsAllMusic:
         return url
     
         
-    def searchForArtist(self, artist, force=False):
+    def searchForArtist(self, artist, maxArtists=99, force=False, debug=False):
         print("\n\n===================== Searching For {0} =====================".format(artist))
         url = self.getSearchArtistURL(artist)
         if url is None:
@@ -128,7 +130,7 @@ class dbArtistsAllMusic:
             print("Error downloading {0}".format(url))
             return False
 
-        self.parseSearchArtist(artist, data, force)
+        self.parseSearchArtist(artist, data, maxArtists, force, debug)
     
         
         

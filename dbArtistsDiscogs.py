@@ -66,7 +66,7 @@ class dbArtistsDiscogs:
     ##################################################################################################################
     # Search Functions
     ##################################################################################################################
-    def parseSearchArtist(self, artist, data, force=False):
+    def parseSearchArtist(self, artist, data, maxArtists=99, force=False, debug=False):
         if data is None:
             return None
         
@@ -106,17 +106,18 @@ class dbArtistsDiscogs:
         iArtist = 0
         for href, hrefData in artistDB.items():
             iArtist += 1
+            if iArtist > maxArtists:
+                break
             if href.startswith("/artist") is False:
                 continue
         
             discID   = self.dutils.getArtistID(href)
             url      = self.getArtistURL(href)
-            savename = self.getArtistSavename(discID)
+            savename = self.dutils.getArtistSavename(discID)
 
             print(iArtist,'/',len(artistDB),'\t:',len(discID),'\t',url)
             if isFile(savename):
                 if force is False:
-                    print("\t--> Exists.")
                     continue
 
             self.downloadArtistURL(url, savename, force=force, sleeptime=self.sleeptime)
@@ -128,16 +129,16 @@ class dbArtistsDiscogs:
         return url
     
         
-    def searchForArtist(self, artist, force=False):
+    def searchForArtist(self, artist, maxArtists=99, force=False, debug=False):
         print("\n\n===================== Searching For {0} =====================".format(artist))
         url = self.getSearchArtistURL(artist)
         if url is None:
             raise ValueError("URL is None!")
                     
         ## Download data
-        data, response = self.downloadURL(url)
+        data, response = self.dutils.downloadURL(url)
         if response != 200:
             print("Error downloading {0}".format(url))
             return False
 
-        self.parseSearchArtist(artist, data, force)
+        self.parseSearchArtist(artist, data, maxArtists, force, debug)
