@@ -343,6 +343,48 @@ class utilsDeezer(utilsBase):
     
 
 ################################################################################################################
+# AlbumOfTheYear
+################################################################################################################
+class utilsAlbumOfTheYear(utilsBase):
+    def __init__(self, disc=None):
+        super().__init__(disc)
+        
+        
+    def getArtistID(self, href, debug=False):
+        if href is None:
+            if debug:
+                print("Could not get artist disc ID from None!")
+            return None
+        
+        ival = "/artist"
+        pos = href.find(ival)
+        if pos == -1:
+            if debug:
+                print("Could not find discID in {0}".format(suburl))
+            return None
+        
+        try:
+            data = href[pos+len(ival)+1:]
+            pos  = data.find("-")
+            artistID = data[:pos]
+        except:
+            print("Could not extract discID from {0}".format(href))
+            return None
+        
+        try:
+            int(artistID)
+        except:
+            if debug:
+                print("DiscID {0} is not an integer".format(artistID))
+            return None
+
+        if debug:
+            print("Found ID {0} from {1}".format(artistID, href))
+            
+        return artistID  
+    
+
+################################################################################################################
 # AppleMusic
 ################################################################################################################
 class utilsAppleMusic(utilsBase):
