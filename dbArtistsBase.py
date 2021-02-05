@@ -112,7 +112,7 @@ class dbArtistsBase:
     def getAllFiles(self, dirVal):
         files  = findExt(dirVal, ext='.p')
         return files
-        
+    
         
     def getArtistFiles(self, modVal, previousDays=None, force=False):
         if previousDays is None:
@@ -142,6 +142,31 @@ class dbArtistsBase:
         return newFiles
     
     
+    def getAllRawHTMLFiles(self, dirVal):
+        files = findExt(setDir(dirVal, "data"), ext=".html")
+        return files
+    
+        
+    def getArtistRawHTMLFiles(self, previousDays=None, force=False):
+        if previousDays is None:
+            previousDays = self.previousDays
+            
+        files  = self.getAllRawHTMLFiles(self.disc.getArtistsDir())
+        
+        now    = datetime.now()
+        #lastModified = None
+
+        newFiles = None
+        if force is True:
+            newFiles = files
+            print("  ===> Parsing all {0} files for modval {1}".format(len(newFiles), modVal))
+        else:
+            numNew    = [ifile for ifile in files if (now-datetime.fromtimestamp(path.getmtime(ifile))).days < previousDays]
+            #numRecent = [ifile for ifile in files if datetime.fromtimestamp(path.getmtime(ifile)) > lastModified]
+            newFiles  = numNew #list(set(numNew).union(set(numRecent)))
+            print("  ===> Found new {0} files (< {1} days) to parse".format(len(newFiles), previousDays))
+        return newFiles
+        
 
 
     

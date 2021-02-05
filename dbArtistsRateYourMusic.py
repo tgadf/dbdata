@@ -46,8 +46,10 @@ class dbArtistsRateYourMusic:
     ##################################################################################################################
     # Parse Downloaded Files
     ##################################################################################################################
-    def parseDownloadedFiles(self):
+    def parseDownloadedFiles(self, previousDays=None, force=False):
         artistDir = self.disc.getArtistsDir()
+        files     = self.getArtistRawHTMLFiles(previousDays=None, force=False)
+        return
         dataDir   = setDir(artistDir, "data")
         files     = findPatternExt(dataDir, pattern="Rate Your Music", ext=".html")
         for ifile in files:

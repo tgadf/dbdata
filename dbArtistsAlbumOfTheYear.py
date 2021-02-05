@@ -89,7 +89,7 @@ class dbArtistsAlbumOfTheYear:
     
     def getSearchArtistURL(self, artist):
         baseURL = self.searchURL
-        url = "{0}/?q={1}".format(self.searchURL, artist)
+        url = "{0}/?q={1}".format(self.searchURL, artist.replace(" ","+"))
         #url = urllib.parse.urljoin(baseURL, "{0}{1}".format("artists/", quote(artist)))                  
         return url
     

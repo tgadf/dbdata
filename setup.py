@@ -17,6 +17,7 @@ setup(
       'artistLastFM', 'dbArtistsLastFM', 
       'artistRateYourMusic', 'dbArtistsRateYourMusic',
       'artistRockCorner', 'dbArtistsRockCorner',
+      'artistAlbumOfTheYear', 'dbArtistsAlbumOfTheYear',
       'artistAB', 'dbArtistsAceBootlegs', 
       'artistCL', 'dbArtistsCDandLP', 
       'artistDP', 'dbArtistsDatPiff', 

@@ -221,8 +221,18 @@ class dbArtistsRawHTML(dbArtistsBase):
         self.setPrimary()
         self.dbArtists = dbArtists
             
-    def parse(self):
-        self.dbArtists.parseDownloadedFiles()
+    def parse(self, previousDays=None, force=False):
+        newFiles = self.getArtistRawHTMLFiles(previousDays, force)
+
+        for ifile in newFiles:
+            print("Parsing {0}".format(ifile))
+            htmldata = getFile(ifile)
+            retval   = self.artist.getData(ifile)
+            artistID = retval.ID.ID
+            savename = self.dutils.getArtistSavename(artistID)
+            saveFile(idata=htmldata, ifile=savename, debug=False)        
+        
+        #self.dbArtists.parseDownloadedFiles(previousDays=None, force=False)
 
             
 
