@@ -343,6 +343,38 @@ class utilsDeezer(utilsBase):
     
 
 ################################################################################################################
+# IHeart
+################################################################################################################
+class utilsIHeart(utilsBase):
+    def __init__(self, disc=None):
+        super().__init__(disc)
+        self.baseURL = "https://www.iheart.com/artist/"
+        self.relURL  = "/artist/"
+
+        
+        
+    def getArtistID(self, href, debug=False):
+        if href.startswith(self.baseURL):
+            if debug:
+                print("Removing {0} from url --> {1}".format(self.baseURL,href))
+            href = href[len(self.baseURL):]        
+        if href.startswith(self.relURL):
+            if debug:
+                print("Removing {0} from url --> {1}".format(self.relURL,href))
+            href = href[len(self.relURL):]
+        if href.endswith("/albums/"):
+            href = href[:-8]
+
+        artistID = href.split("-")[-1]
+        try:
+            str(int(artistID))
+        except:
+            print("Could not determine artistID from URL {0}".format(href))
+        
+        return artistID
+    
+
+################################################################################################################
 # AlbumOfTheYear
 ################################################################################################################
 class utilsAlbumOfTheYear(utilsBase):
