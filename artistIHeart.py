@@ -46,7 +46,7 @@ class artistIHeart(artistDBBase):
         script = self.bsdata.find("script", {"data-name": "initial-state"})
         if script is None:
             anc = artistDBNameClass(name=None, err = "NoJSON")
-            return amc
+            return anc
         
         try:
             jdata = json.loads(script.contents[0])

@@ -18,6 +18,8 @@ setup(
       'artistRateYourMusic', 'dbArtistsRateYourMusic',
       'artistRockCorner', 'dbArtistsRockCorner',
       'artistAlbumOfTheYear', 'dbArtistsAlbumOfTheYear',
+      'artistIHeart', 'dbArtistsIHeart',
+      'artistGenius', 'dbArtistsGenius',
       'artistAB', 'dbArtistsAceBootlegs', 
       'artistCL', 'dbArtistsCDandLP', 
       'artistDP', 'dbArtistsDatPiff', 

@@ -375,6 +375,46 @@ class utilsIHeart(utilsBase):
     
 
 ################################################################################################################
+# Genius
+################################################################################################################
+class utilsGenius(utilsBase):
+    def __init__(self, disc=None):
+        super().__init__(disc)
+        self.baseURL = "https://genius.com/artists/"
+        self.relURL  = "/artists/"
+        
+    def getArtistID(self, href, debug=False):
+        if href.startswith(self.baseURL):
+            if debug:
+                print("Removing {0} from url --> {1}".format(self.baseURL,href))
+            href = href[len(self.baseURL):]        
+        if href.startswith(self.relURL):
+            if debug:
+                print("Removing {0} from url --> {1}".format(self.relURL,href))
+            href = href[len(self.relURL):]
+        name = href.split("/+albums")[0]
+        if name.endswith("/"):
+            name = href[:-1]
+        if debug:
+            print("Raw URL: {0}".format(name))
+        #name = self.quoteIt(name, debug=debug)
+        if debug:
+            print("Raw URL (Post Quote): {0}".format(name))
+        if name is None:
+            return None
+        name = "{0}{1}".format(self.baseURL,name)
+        if debug:
+            print("Full URL: {0}".format(name))
+        m = md5()
+        for val in name.split(" "):
+            m.update(val.encode('utf-8'))
+        hashval = m.hexdigest()
+        artistID  = str(int(hashval, 16) % int(1e8))
+        return artistID
+   
+    
+
+################################################################################################################
 # AlbumOfTheYear
 ################################################################################################################
 class utilsAlbumOfTheYear(utilsBase):
