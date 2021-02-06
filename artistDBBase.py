@@ -24,8 +24,12 @@ class artistDBURLClass:
         
         
 class artistDBNameClass:
-    def __init__(self, name=None, err=None):
+    def __init__(self, name=None, native=None, err=None):
         self.name = name
+        if native is None:
+            self.native = name
+        else:
+            self.native = native
         self.err  = err
         
     def get(self):
@@ -149,7 +153,10 @@ class artistDBDataClass:
     def show(self):
         print("Artist Data Class")
         print("-------------------------")
-        print("Artist:  {0}".format(self.artist.name))
+        if self.artist.native != self.artist.name:
+            print("Artist:  {0} ({1})".format(self.artist.name, self.artist.native))
+        else:
+            print("Artist:  {0}".format(self.artist.name))
         print("Meta:    {0}".format(self.meta.title))
         print("         {0}".format(self.meta.url))
         print("URL:     {0}".format(self.url.url))

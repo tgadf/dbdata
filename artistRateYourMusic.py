@@ -4,6 +4,7 @@ from artistDBBase import artistDBProfileClass, artistDBMediaClass, artistDBMedia
 from artistDBBase import artistDBMediaDataClass, artistDBMediaCountsClass
 from strUtils import fixName
 from dbUtils import utilsRateYourMusic
+from webUtils import removeTag
 
 
 class artistRateYourMusic(artistDBBase):
@@ -45,12 +46,21 @@ class artistRateYourMusic(artistDBBase):
             anc = artistDBNameClass(err="No H1")
             return anc
         
-        artistName = artistData.text.strip()
-        if len(artistName) > 0:
-            artist = fixName(artistName)
-            anc = artistDBNameClass(name=artist, err=None)
+        span = artistData.find("span")
+        if span is None:
+            artistName = artistData.text.strip()
+            artistNativeName = artistName
         else:
-            anc = artistDBNameClass(name=artist, err="Fix")
+            artistName = span.text.strip()
+            artistData = removeTag(artistData, span)
+            artistNativeName = artistData.text.strip() #.replace(artistName, "").strip()
+            
+        if len(artistName) > 0:
+            artistName = fixName(artistName)
+            artistNativeName = fixName(artistNativeName)
+            anc = artistDBNameClass(name=artistName, native=artistNativeName, err=None)
+        else:
+            anc = artistDBNameClass(name=artistName, err="Fix")
         
         return anc
     
