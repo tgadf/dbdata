@@ -143,7 +143,9 @@ class dbArtistsBase:
     
     
     def getAllRawHTMLFiles(self, dirVal):
-        files = findExt(setDir(dirVal, "data"), ext=".html")
+        files1 = findExt(setDir(dirVal, "data"), ext=".html")
+        files2 = findExt(setDir(dirVal, "data"), ext=".htm")
+        files  = list(set(files1 + files2))
         return files
     
         

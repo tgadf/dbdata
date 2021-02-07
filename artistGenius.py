@@ -4,14 +4,14 @@ from artistDBBase import artistDBProfileClass, artistDBMediaClass, artistDBMedia
 from artistDBBase import artistDBMediaDataClass, artistDBMediaCountsClass
 from strUtils import fixName
 import json
-from dbUtils import utilsDeezer
+from dbUtils import utilsGenius
 from hashlib import md5
 
 
-class artistDeezer(artistDBBase):
+class artistGenius(artistDBBase):
     def __init__(self, debug=False):
         super().__init__(debug)
-        self.dutils = utilsDeezer()
+        self.dutils = utilsGenius()
         self.debug  = False
         
         
@@ -24,7 +24,7 @@ class artistDeezer(artistDBBase):
         
         artist      = self.getName()
         meta        = self.getMeta()
-        url         = self.getURL()
+        url         = self.getURL(meta)
         ID          = self.getID(url.url)
         pages       = self.getPages()
         profile     = self.getProfile()        
@@ -43,19 +43,30 @@ class artistDeezer(artistDBBase):
     ## Artist Name
     ##############################################################################################################################
     def getName(self):
-        h1 = self.bsdata.find("h1", {"id": "naboo_artist_name"})
-        if h1 is None:
-            anc = artistDBNameClass(name=None, err = "NoH1")
+        jdata = None
+        for meta in self.bsdata.findAll("meta"):
+            content = meta.attrs['content']
+            if content.startswith("{") and content.endswith("}"):
+                try:
+                    jdata = json.loads(content)
+                except:
+                    continue
+                break
+
+        artistName = None
+        if jdata is not None:
+            try:
+                artistName = jdata['artist']['name']
+            except:
+                anc = artistDBNameClass(name=None, err = "BadJSON")
+                return anc
+        else:
+            anc = artistDBNameClass(name=None, err = "NoJSON")
             return anc
         
-        span = h1.find("span", {"itemprop": "name"})
-        if span is None:
-            anc = artistDBNameClass(name=None, err = "NoSpan")
-            return anc
- 
-        artist = span.text
-        anc = artistDBNameClass(name=artist, err=None)
+        anc = artistDBNameClass(name=artistName, err=None)
         return anc
+
     
     
 
@@ -81,18 +92,8 @@ class artistDeezer(artistDBBase):
     ##############################################################################################################################
     ## Artist URL
     ##############################################################################################################################
-    def getURL(self):
-        h1 = self.bsdata.find("h1", {"id": "naboo_artist_name"})
-        if h1 is None:
-            auc = artistDBURLClass(url=None, err = "NoH1")
-            return auc
-        
-        ref = h1.find("a")
-        if ref is None:
-            auc = artistDBURLClass(url=None, err = "NoSpan")
-            return auc
- 
-        url = ref.attrs['href']
+    def getURL(self, meta):
+        url = meta.url
         auc = artistDBURLClass(url=url)
         return auc
     
@@ -158,61 +159,55 @@ class artistDeezer(artistDBBase):
     
     ##############################################################################################################################
     ## Artist Media
-    ############################################################################################################################## 
+    ##############################################################################################################################         
     def getMedia(self, artist):
         amc  = artistDBMediaClass()
         name = "Albums"
         amc.media[name] = []
         
-        mediaType = "Singles"
-        
-        div = self.bsdata.find("div", {"class": "naboo-head-artist-music"})
-        if div is None:
-            print("No tracks!")
-            return amc
-            
-           
-        table = div.find("table")
-        if table is None:
-            #print("No track table")
-            return amc
-            
-        trs = table.findAll("tr")
-        for itr,tr in enumerate(trs):
-            #print(itr,'/',len(trs),'\t',len(tr.findAll("td")))
-            
-            track  = tr.find("td", {"class": "track"})
-            title  = None
-            if track is not None:
-                span  = track.find("span", {"itemprop": "name"})
-                if span is not None:
-                    title = span.text.strip()
-    
-            artist = tr.find("td", {"class": "artist"})
-            artistURL = None
-            artistName = None
-            if artist is not None:
-                ref = artist.find("a", {"itemprop": "byArtist"})
-                if ref:
-                    artistURL  = ref.attrs['href']
-                    artistName = ref.text
-        
-            album  = tr.find("td", {"class": "album"})
-            albumURL  = None
-            albumName = None
-            if album is not None:
-                ref = album.find("a", {"itemprop": "inAlbum"})
-                if ref:
-                    albumURL  = ref.attrs['href']
-                    albumName = ref.text
-            
-            if not all([title,albumURL,artistName]):
-                continue
-            #print(title,'\t',albumURL,'\t',artistName)
-            amdc = artistDBMediaDataClass(album=title, url=albumURL, aclass=None, aformat=None, artist=[artistName], code=None, year=None)
-            if amc.media.get(mediaType) is None:
-                amc.media[mediaType] = []
-            amc.media[mediaType].append(amdc)
+        jdata = None
+        for meta in self.bsdata.findAll("meta"):
+            content = meta.attrs['content']
+            if content.startswith("{") and content.endswith("}"):
+                try:
+                    jdata = json.loads(content)
+                except:
+                    continue
+                break
+
+        if jdata is not None:
+
+            try:
+                artistName = jdata['artist']['name']
+            except:
+                artistName = None
+                
+            mediaType = "Albums"
+            if jdata.get('artist_albums') is not None:
+                for albumData in jdata['artist_albums']:
+                    albumName = albumData['name']
+                    albumID   = albumData['id']
+                    try:
+                        albumYear = albumData['release_date_components']['year']
+                    except:
+                        albumYear = None
+
+                    if amc.media.get(mediaType) is None:
+                        amc.media[mediaType] = []
+                    amdc = artistDBMediaDataClass(album=albumName, url=None, aclass=None, aformat=None, artist=[artistName], code=albumID, year=albumYear)
+                    amc.media[mediaType].append(amdc)
+
+
+            mediaType = "Singles"
+            if jdata.get('artist_songs') is not None:
+                for songData in jdata['artist_songs']:
+                    songName = songData['title']
+                    songID   = songData['id']
+
+                    if amc.media.get(mediaType) is None:
+                        amc.media[mediaType] = []
+                    amdc = artistDBMediaDataClass(album=songName, url=None, aclass=None, aformat=None, artist=[artistName], code=songID, year=None)
+                    amc.media[mediaType].append(amdc)
 
         return amc
     
@@ -230,36 +225,4 @@ class artistDeezer(artistDBBase):
         for creditsubtype in media.media.keys():
             amcc.counts[credittype][creditsubtype] = int(len(media.media[creditsubtype]))
             
-        return amcc
-        
-        
-        amcc.err = "No Counts"
-        return amcc
-        
-        results = self.bsdata.findAll("ul", {"class": "facets_nav"})
-        if results is None or len(results) == 0:
-            amcc.err = "No Counts"
-            return amcc
-            
-        for result in results:
-            for li in result.findAll("li"):
-                ref = li.find("a")
-                if ref:
-                    attrs = ref.attrs
-                    span = ref.find("span", {"class": "facet_count"})
-                    count = None
-                    if span:
-                        count = span.text
-                        credittype    = attrs.get("data-credit-type")
-                        creditsubtype = attrs.get("data-credit-subtype")
-                        if credittype and creditsubtype:
-                            if amcc.counts.get(credittype) == None:
-                                amcc.counts[credittype] = {}
-                            if amcc.counts[credittype].get(creditsubtype) == None:
-                                try:
-                                    amcc.counts[credittype][creditsubtype] = int(count)
-                                except:
-                                    amcc.counts[credittype][creditsubtype] = count
-                                    amcc.err = "Non Int"
-
         return amcc
