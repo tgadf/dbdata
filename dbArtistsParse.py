@@ -234,6 +234,30 @@ class dbArtistsRawHTML(dbArtistsBase):
         
         #self.dbArtists.parseDownloadedFiles(previousDays=None, force=False)
 
+
+#################################################################################################################################
+#
+# Parse From Raw Files
+#
+#################################################################################################################################
+class dbArtistsRawFiles(dbArtistsBase):
+    def __init__(self, dbArtists, datatype):        
+        super().__init__(dbArtists)
+        self.setPrimary()
+        self.datatype  = datatype
+        self.dbArtists = dbArtists
+            
+    def parse(self, previousDays=None, force=False):
+        newFiles = self.getArtistRawFiles(datatype=self.datatype, previousDays=previousDays, force=force)
+        for ifile in newFiles:
+            print("Parsing {0}".format(ifile),'\t',end='')
+            htmldata = getFile(ifile)
+            retval   = self.artist.getData(ifile)
+            artistID = retval.ID.ID
+            savename = self.dutils.getArtistSavename(artistID)
+            saveFile(idata=htmldata, ifile=savename, debug=False)        
+        #self.dbArtists.parseDownloadedFiles(previousDays=None, force=False)
+
             
 
 #################################################################################################################################

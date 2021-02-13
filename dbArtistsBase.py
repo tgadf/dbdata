@@ -113,7 +113,7 @@ class dbArtistsBase:
         files  = findExt(dirVal, ext='.p')
         return files
     
-        
+
     def getArtistFiles(self, modVal, previousDays=None, force=False):
         if previousDays is None:
             previousDays = self.previousDays
@@ -142,12 +142,38 @@ class dbArtistsBase:
         return newFiles
     
     
+    def getAllRawSpotifyFiles(self, dirVal):
+        files = findExt(setDir(dirVal, "spotify"), ext=".p")
+        return files
+    
     def getAllRawHTMLFiles(self, dirVal):
         files1 = findExt(setDir(dirVal, "data"), ext=".html")
         files2 = findExt(setDir(dirVal, "data"), ext=".htm")
         files  = list(set(files1 + files2))
         return files
     
+    
+    def getRecentFiles(self, files, previousDays=None, force=False):
+        newFiles = None
+        if force is True:
+            newFiles = files
+            print("  ===> Parsing all {0} files for modval {1}".format(len(newFiles), modVal))
+        else:
+            now       = datetime.now()
+            numNew    = [ifile for ifile in files if (now-datetime.fromtimestamp(path.getmtime(ifile))).days < previousDays]
+            newFiles  = numNew #list(set(numNew).union(set(numRecent)))
+            print("  ===> Found new {0} files (< {1} days) to parse".format(len(newFiles), previousDays))
+        return newFiles
+    
+    
+    def getArtistRawFiles(self, datatype, previousDays=None, force=False):
+        if previousDays is None:
+            previousDays = self.previousDays
+    
+        searchDir = setDir(self.disc.getArtistsDir(), datatype)
+        files = findExt(searchDir, ext=".p")
+        return self.getRecentFiles(files, previousDays, force)
+
         
     def getArtistRawHTMLFiles(self, previousDays=None, force=False):
         if previousDays is None:

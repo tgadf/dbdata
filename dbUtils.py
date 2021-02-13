@@ -1,6 +1,7 @@
 from hashlib import md5, blake2b, sha256, sha1
 import urllib
 from fsUtils import mkSubDir, setFile, isFile
+from fileUtils import getBaseFilename
 from ioUtils import saveFile
 from time import sleep
 from urllib.parse import quote
@@ -375,17 +376,33 @@ class utilsIHeart(utilsBase):
     
 
 ################################################################################################################
-# KWorb
+# KWorbSpotify
 ################################################################################################################
-class utilsKWorb(utilsBase):
+class utilsKWorbSpotify(utilsBase):
     def __init__(self, disc=None):
         super().__init__(disc)
         self.baseURL = "https://kworb.net/spotify/"
         self.relURL  = "/spotify/"
+        
+    def getArtistID(self, name, counts):
+        m = md5()
+        m.update(name.encode('utf-8'))
+        m.update(counts.encode('utf-8'))
+        hashval = m.hexdigest()
+        artistID  = str(int(hashval, 16) % int(1e12))
+        return artistID
+    
 
+################################################################################################################
+# KWorbYouTube
+################################################################################################################
+class utilsKWorbYouTube(utilsBase):
+    def __init__(self, disc=None):
+        super().__init__(disc)
+        self.baseURL = "https://kworb.net/youtube/"
+        self.relURL  = "/spotify/"
         
-        
-    def getArtistID(self, href, debug=False):
+    def getArtistID(self, href):
         if href.startswith(self.baseURL):
             if debug:
                 print("Removing {0} from url --> {1}".format(self.baseURL,href))
@@ -396,9 +413,10 @@ class utilsKWorb(utilsBase):
             href = href[len(self.relURL):]
         if href.endswith("/albums/"):
             href = href[:-8]
-            
+        1/0
         m = md5()
-        m.update(href.encode('utf-8'))
+        #m.update(name.encode('utf-8'))
+        #m.update(counts.encode('utf-8'))
         hashval = m.hexdigest()
         artistID  = str(int(hashval, 16) % int(1e12))
         return artistID
