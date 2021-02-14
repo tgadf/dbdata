@@ -46,7 +46,8 @@ class dbArtistsKWorbYouTube:
                 item = dict(zip(ths, tr.findAll("td")))
                 data.append(item)
 
-        for item in data:
+        print("Found {0} YouTube Artists".format(len(data)))
+        for i,item in enumerate(data):
             info = item["Artist"]
             url  = info.find('a').attrs['href']
             name = info.find('a').text
@@ -57,7 +58,7 @@ class dbArtistsKWorbYouTube:
                 print("Y\t",savename,'\t',url,'\t',name)
             else:
                 fullURL = "{0}/{1}".format(self.youtubeURL, quote(url))
-                print("-\t",savename,'\t',fullURL,'\t',name)
+                print("{0}/{1}".format(i,len(data)),"\t-\t",savename,'\t',fullURL,'\t',name)
                 self.dutils.downloadArtistURL(url=fullURL, savename=savename, force=True)
     
     

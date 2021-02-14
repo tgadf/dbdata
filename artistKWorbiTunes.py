@@ -26,11 +26,11 @@ class artistKWorbiTunes(artistDBBase):
         artist      = self.getName()
         meta        = self.getMeta()
         url         = self.getURL()
+        ID          = self.getID(url.url)
         pages       = self.getPages()
         profile     = self.getProfile()
-        media       = self.getMedia()
+        media       = self.getMedia(artist.name)
         mediaCounts = self.getMediaCounts(media)
-        ID          = self.getID(artist, mediaCounts)
         
         err = [artist.err, meta.err, url.err, ID.err, pages.err, profile.err, mediaCounts.err, media.err]
         
@@ -43,11 +43,11 @@ class artistKWorbiTunes(artistDBBase):
     ##############################################################################################################################
     ## Artist Name
     ##############################################################################################################################
-    def getName(self):
-        title      = self.bsdata.find("strong", {"class": "pagetitle"})
+    def getName(self):        
+        title      = self.bsdata.find("span", {"class": "pagetitle"})        
         artistName = None
         if title is not None:
-            artistName = title.text.replace(" - iTunes Chart History", "")
+            artistName = title.text.split(" | ")[0].strip()
         anc = artistDBNameClass(name=artistName, err=None)
         return anc
     
@@ -75,19 +75,21 @@ class artistKWorbiTunes(artistDBBase):
     ##############################################################################################################################
     ## Artist URL
     ##############################################################################################################################
-    def getURL(self):
+    def getURL(self):        
         if self.inputdata is not None:
-            artistURL = "https://kworb.net/spotify/artist/{0}.html".format(getBaseFilename(self.inputdata))
-        auc = artistDBURLClass(url=artistURL)        
-        return auc
-
+            artistURL = "https://kworb.net/itunes/artist/{0}.html".format(getBaseFilename(self.inputdata))
+            auc = artistDBURLClass(url=artistURL)        
+            return auc
+        else:
+            auc = artistDBURLClass(url=None, err="NoInput")        
+            return auc
     
 
     ##############################################################################################################################
     ## Artist ID
     ##############################################################################################################################
-    def getID(self, artist, mediaCounts):
-        discID = self.dbUtils.getArtistID(artist.name, str(mediaCounts.counts))
+    def getID(self, url):
+        discID = self.dbUtils.getArtistID(url)
         aic = artistDBIDClass(ID=discID)
         return aic
 
@@ -117,41 +119,34 @@ class artistKWorbiTunes(artistDBBase):
     ##############################################################################################################################
     ## Artist Media
     ##############################################################################################################################
-    def getMedia(self):
+    def getMedia(self, artist):
         amc  = artistDBMediaClass()
-        mediaType = "Singles"
+        
+        mediaType = "Albums"
         amc.media[mediaType] = []
 
-        table = self.bsdata.find("table")
-        if table is not None:
-            ths = table.findAll("th")
-            ths = [th.text for th in ths]
+        for table in self.bsdata.findAll("table"):
             trs = table.findAll("tr")
-            
-            for itr,tr in enumerate(trs[1:]):
-                trackData = dict(zip(ths,tr.findAll("td")))
+            for itr,tr in enumerate(trs):
+                tds = tr.findAll("td")
+                for itd,td in enumerate(tds):
+                    div=td.find("div", {"class": "wrap"})
+                    if div is not None:
+                        name = div.text
+                        if name.startswith("Album: "):
+                            mediaType = "Album"
+                            title = name[7:]
+                        else:
+                            mediaType = "Single"
+                            title = name
+                        if amc.media.get(mediaType) is None:
+                            amc.media[mediaType] = []
 
-                trackYear = trackData["Peak Date"].text[:4]
+                        amdc = artistDBMediaDataClass(album=title, url=None, aclass=None, aformat=None, artist=artist, code=None, year=None)
+                        if amc.media.get(mediaType) is None:
+                            amc.media[mediaType] = []
+                        amc.media[mediaType].append(amdc)                            
 
-                trackURL  = trackData["Track"].find("a")
-                if trackURL is not None:
-                    trackURL = trackURL.attrs['href']
-                trackName = trackData["Track"].text
-
-                trackArtists = []
-                for trackArtistData in trackData["With"].findAll("a"):
-                    trackArtistURL  = trackArtistData.find("a")
-                    if trackArtistURL is not None:
-                        trackArtistURL = trackArtistURL.attrs['href']
-                    trackArtistName = trackData["Track"].text
-                    trackArtists.append({"Artist": trackArtistName, "URL": trackArtistURL})
-
-
-                amdc = artistDBMediaDataClass(album=trackName, url=trackURL, aclass=None, aformat=None, artist=trackArtists, code=None, year=trackYear)
-                if amc.media.get(mediaType) is None:
-                    amc.media[mediaType] = []
-                amc.media[mediaType].append(amdc)        
-                    
         return amc
     
     

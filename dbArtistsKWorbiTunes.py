@@ -21,7 +21,7 @@ class dbArtistsKWorbiTunes:
         self.debug  = debug
         
         self.baseURL    = "https://kworb.net/"
-        self.youtubeURL = "https://kworb.net/youtube"
+        self.youtubeURL = "https://kworb.net/itunes"
         self.searchURL  = None
 
 
@@ -39,14 +39,14 @@ class dbArtistsKWorbiTunes:
         data   = []
         artistDir = self.disc.getArtistsDir()
         saveDir   = setDir(artistDir, "data")
-        print(artistDir)
         for table in bsdata.findAll("table"):
             ths = [th.text for th in table.findAll("th")]
             for tr in table.findAll("tr")[1:]:
                 item = dict(zip(ths, tr.findAll("td")))
                 data.append(item)
 
-        for item in data:
+        print("Found {0} iTunes Artists".format(len(data)))
+        for i,item in enumerate(data):
             info = item["Artist"]
             url  = info.find('a').attrs['href']
             name = info.find('a').text
@@ -57,7 +57,7 @@ class dbArtistsKWorbiTunes:
                 print("Y\t",savename,'\t',url,'\t',name)
             else:
                 fullURL = "{0}/{1}".format(self.youtubeURL, quote(url))
-                print("-\t",savename,'\t',fullURL,'\t',name)
+                print("{0}/{1}".format(i,len(data)),"\t-\t",savename,'\t',fullURL,'\t',name)
                 self.dutils.downloadArtistURL(url=fullURL, savename=savename, force=True)
     
     

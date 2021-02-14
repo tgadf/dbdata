@@ -423,6 +423,31 @@ class utilsKWorbYouTube(utilsBase):
     
 
 ################################################################################################################
+# KWorbiTunes
+################################################################################################################
+class utilsKWorbiTunes(utilsBase):
+    def __init__(self, disc=None):
+        super().__init__(disc)
+        self.baseURL = "https://kworb.net/itunes/artist/"
+        self.relURL  = "/artist/"
+        
+    def getArtistID(self, href, debug=False):
+        if href.startswith(self.baseURL):
+            if debug:
+                print("Removing {0} from url --> {1}".format(self.baseURL,href))
+            href = href[len(self.baseURL):]        
+        if href.startswith(self.relURL):
+            if debug:
+                print("Removing {0} from url --> {1}".format(self.relURL,href))
+            href = href[len(self.relURL):]
+        m = md5()
+        m.update(href.encode('utf-8'))
+        hashval = m.hexdigest()
+        artistID  = str(int(hashval, 16) % int(1e12))
+        return artistID
+    
+
+################################################################################################################
 # Genius
 ################################################################################################################
 class utilsGenius(utilsBase):
