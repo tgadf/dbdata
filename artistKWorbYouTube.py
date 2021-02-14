@@ -26,14 +26,13 @@ class artistKWorbYouTube(artistDBBase):
         artist      = self.getName()
         meta        = self.getMeta()
         url         = self.getURL()
+        ID          = self.getID(url.url)
         pages       = self.getPages()
         profile     = self.getProfile()
         media       = self.getMedia()
         mediaCounts = self.getMediaCounts(media)
-        ID          = self.getID(artist, mediaCounts)
-        
         err = [artist.err, meta.err, url.err, ID.err, pages.err, profile.err, mediaCounts.err, media.err]
-        
+
         adc = artistDBDataClass(artist=artist, meta=meta, url=url, ID=ID, pages=pages, profile=profile, mediaCounts=mediaCounts, media=media, err=err)
         
         return adc
@@ -44,10 +43,11 @@ class artistKWorbYouTube(artistDBBase):
     ## Artist Name
     ##############################################################################################################################
     def getName(self):
-        title      = self.bsdata.find("strong", {"class": "pagetitle"})
+        title      = self.bsdata.find("span", {"class": "pagetitle"})        
         artistName = None
         if title is not None:
-            artistName = title.text.replace(" - YouTube Chart History", "")
+            artistName = title.text.split(" | ")[0].strip()
+            artistName = artistName.replace("YouTube Statistics", "").strip()
         anc = artistDBNameClass(name=artistName, err=None)
         return anc
     
@@ -77,17 +77,21 @@ class artistKWorbYouTube(artistDBBase):
     ##############################################################################################################################
     def getURL(self):
         if self.inputdata is not None:
-            artistURL = "https://kworb.net/spotify/artist/{0}.html".format(getBaseFilename(self.inputdata))
-        auc = artistDBURLClass(url=artistURL)        
-        return auc
+            artistURL="https://kworb.net/youtube/artist/{0}.html".format(getBaseFilename(self.inputdata))
+            auc = artistDBURLClass(url=artistURL)        
+            return auc
+        else:
+            auc = artistDBURLClass(url=None, err="NoFile")        
+            return auc
+            
 
     
 
     ##############################################################################################################################
     ## Artist ID
     ##############################################################################################################################
-    def getID(self, artist, mediaCounts):
-        discID = self.dbUtils.getArtistID(artist.name, str(mediaCounts.counts))
+    def getID(self, url):
+        discID = self.dbUtils.getArtistID(url)
         aic = artistDBIDClass(ID=discID)
         return aic
 
@@ -119,35 +123,45 @@ class artistKWorbYouTube(artistDBBase):
     ##############################################################################################################################
     def getMedia(self):
         amc  = artistDBMediaClass()
-        mediaType = "Singles"
+        mediaType = "Videos"
         amc.media[mediaType] = []
-
-        table = self.bsdata.find("table")
-        if table is not None:
-            ths = table.findAll("th")
-            ths = [th.text for th in ths]
+        
+        for table in self.bsdata.findAll("table"):
             trs = table.findAll("tr")
-            
-            for itr,tr in enumerate(trs[1:]):
-                trackData = dict(zip(ths,tr.findAll("td")))
+            ths = [th.text for th in table.findAll("th")]
+            for tr in trs[1:]:
+                td = tr.find('td')
+                ref = td.find("a")
+                name = td.text
+                url  = None
+                if ref is not None:
+                    url = ref.attrs['href']
+                
+                #https://kworb.net/youtube/video/fRh_vgS2dFE.html
+                trackURL = "https://kworb.net/youtube/video/{0}.html".format(getBaseFilename(url))
 
-                trackYear = trackData["Peak Date"].text[:4]
+                songData = name.split(' - ')
+                artistName = songData[0]
+                trackName  = " - ".join(songData[1:])
+                
+                removes = []
+                removes = ["(Official Music Video)", "(Official Lyric Video)", "(Official Video (Short Version))",
+                           "(Official Video)", "[Lyric Video]", "(Video Version)", "[Official Music Video]",
+                           "(Official Audio)", "(Shazam Version)", "(Explicit)", "(Dance Video)", "(Lyric Video)",
+                           "[Official Video]", "(Official Dance Video)", '(Acoustic)', '(Audio)', '(Visualizer)',
+                           '(Video Commentary)', '(VEVO Footnotes)', '(Choir Version)', '(Fan Lip Sync Version)',
+                           '(Trailer)', '(Teaser)']
+                for rmText in removes:
+                    trackName = trackName.replace(rmText, "").strip()
+                while trackName.find("  ") != -1:
+                    trackName = trackName.replace("  ", " ")
+                    if len(trackName) <= 1:
+                        break
+                
+                if len(trackName.strip()) == 0:
+                    continue
 
-                trackURL  = trackData["Track"].find("a")
-                if trackURL is not None:
-                    trackURL = trackURL.attrs['href']
-                trackName = trackData["Track"].text
-
-                trackArtists = []
-                for trackArtistData in trackData["With"].findAll("a"):
-                    trackArtistURL  = trackArtistData.find("a")
-                    if trackArtistURL is not None:
-                        trackArtistURL = trackArtistURL.attrs['href']
-                    trackArtistName = trackData["Track"].text
-                    trackArtists.append({"Artist": trackArtistName, "URL": trackArtistURL})
-
-
-                amdc = artistDBMediaDataClass(album=trackName, url=trackURL, aclass=None, aformat=None, artist=trackArtists, code=None, year=trackYear)
+                amdc = artistDBMediaDataClass(album=trackName, url=trackURL, aclass=None, aformat=None, artist=artistName, code=None, year=None)
                 if amc.media.get(mediaType) is None:
                     amc.media[mediaType] = []
                 amc.media[mediaType].append(amdc)        
