@@ -402,19 +402,12 @@ class utilsKWorbYouTube(utilsBase):
         self.baseURL = "https://kworb.net/youtube/"
         self.relURL  = "/youtube/"
         
-    def getArtistID(self, href, debug=False):
-        if href.startswith(self.baseURL):
-            if debug:
-                print("Removing {0} from url --> {1}".format(self.baseURL,href))
-            href = href[len(self.baseURL):]        
-        if href.startswith(self.relURL):
-            if debug:
-                print("Removing {0} from url --> {1}".format(self.relURL,href))
-            href = href[len(self.relURL):]
+    def getArtistID(self, name, counts):
         m = md5()
-        m.update(href.encode('utf-8'))
+        m.update(name.encode('utf-8'))
+        m.update(counts.encode('utf-8'))
         hashval = m.hexdigest()
-        artistID  = str(int(hashval, 16) % int(1e11))
+        artistID  = str(int(hashval, 16) % int(1e12))
         return artistID
     
 
@@ -427,17 +420,10 @@ class utilsKWorbiTunes(utilsBase):
         self.baseURL = "https://kworb.net/itunes/artist/"
         self.relURL  = "/artist/"
         
-    def getArtistID(self, href, debug=False):
-        if href.startswith(self.baseURL):
-            if debug:
-                print("Removing {0} from url --> {1}".format(self.baseURL,href))
-            href = href[len(self.baseURL):]        
-        if href.startswith(self.relURL):
-            if debug:
-                print("Removing {0} from url --> {1}".format(self.relURL,href))
-            href = href[len(self.relURL):]
+    def getArtistID(self, name, counts):
         m = md5()
-        m.update(href.encode('utf-8'))
+        m.update(name.encode('utf-8'))
+        m.update(counts.encode('utf-8'))
         hashval = m.hexdigest()
         artistID  = str(int(hashval, 16) % int(1e12))
         return artistID

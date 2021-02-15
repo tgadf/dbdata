@@ -26,11 +26,11 @@ class artistKWorbiTunes(artistDBBase):
         artist      = self.getName()
         meta        = self.getMeta()
         url         = self.getURL()
-        ID          = self.getID(url.url)
         pages       = self.getPages()
         profile     = self.getProfile()
         media       = self.getMedia(artist.name)
         mediaCounts = self.getMediaCounts(media)
+        ID          = self.getID(artist, mediaCounts)
         
         err = [artist.err, meta.err, url.err, ID.err, pages.err, profile.err, mediaCounts.err, media.err]
         
@@ -88,8 +88,8 @@ class artistKWorbiTunes(artistDBBase):
     ##############################################################################################################################
     ## Artist ID
     ##############################################################################################################################
-    def getID(self, url):
-        discID = self.dbUtils.getArtistID(url)
+    def getID(self, artist, mediaCounts):
+        discID = self.dbUtils.getArtistID(artist.name, str(mediaCounts.counts))
         aic = artistDBIDClass(ID=discID)
         return aic
 

@@ -16,7 +16,7 @@ class dbArtistsPrimary(dbArtistsBase):
         self.dbArtists = dbArtists
         
         
-    def parse(self, modVal, previousDays=None, force=False):
+    def parse(self, modVal, previousDays=None, force=False, debug=False):
         newFiles = self.getArtistFiles(modVal, previousDays, force)
         dbdata   = self.getDBData(modVal, force)
 
@@ -27,7 +27,8 @@ class dbArtistsPrimary(dbArtistsBase):
                     print("\tProcessed {0}/{1} files.".format(j,len(newFiles)))
             artistID = getBaseFilename(ifile)
             isKnown  = dbdata.get(artistID)
-            info     = self.artist.getData(ifile)            
+            info     = self.artist.getData(ifile)
+            #print("\t",ifile,' ==> ',info.ID.ID,' <-> ',artistID)
             if info.ID.ID != artistID:
                 if self.debug is True:
                     print("Error for {0}".format(info.meta.title))
