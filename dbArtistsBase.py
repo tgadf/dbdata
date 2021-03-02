@@ -8,7 +8,7 @@ from os import path
 
 class dbArtistsBase:
     def __init__(self, dbArtists, basedir=None, debug=False):
-        self.previousDays = 5
+        self.previousDays = None
         self.force        = False
         
         #######################
@@ -129,15 +129,18 @@ class dbArtistsBase:
                 lastModified = None
         else:
             lastModified = None
-
+            
         newFiles = None
         if lastModified is None:
             newFiles = files
             print("  ===> Parsing all {0} files for modval {1}".format(len(newFiles), modVal))
         else:
-            numNew    = [ifile for ifile in files if (now-datetime.fromtimestamp(path.getmtime(ifile))).days < previousDays]
+            numNew = []
+            if previousDays is not None:
+                numNew    = [ifile for ifile in files if (now-datetime.fromtimestamp(path.getmtime(ifile))).days < previousDays]
             numRecent = [ifile for ifile in files if datetime.fromtimestamp(path.getmtime(ifile)) > lastModified]
             newFiles  = list(set(numNew).union(set(numRecent)))
+            print("  ===> Found [New={0}] / [Rec={1}] / [Tot={2}] files.".format(len(numNew), len(numRecent), len(newFiles)))
             print("  ===> Found new {0} files (< {1} days) to parse for modval {2}".format(len(newFiles), previousDays, modVal))
         return newFiles
     

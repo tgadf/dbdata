@@ -22,7 +22,7 @@ setup(
       'artistGenius', 'dbArtistsGenius',
       'artistKWorbSpotify', 'dbArtistsKWorbSpotify',
       'artistKWorbYouTube', 'dbArtistsKWorbYouTube',
-      'artistKWorbiTunes', 'dbArtistsKWorbiTunes',
+      'artistKWorbiTunes',  'dbArtistsKWorbiTunes',
       'artistAB', 'dbArtistsAceBootlegs', 
       'artistCL', 'dbArtistsCDandLP', 
       'artistDP', 'dbArtistsDatPiff', 

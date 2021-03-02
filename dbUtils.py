@@ -68,14 +68,18 @@ class utilsBase:
         return data, response.getcode()
     
 
-    def downloadArtistURL(self, url, savename, force=False, sleeptime=2):
+    def downloadArtistURL(self, url, savename, force=False, sleeptime=2, debug=False):
+        print("URL/Savename: {0}/{1}".format(url, savename))
         if isFile(savename):
-            if self.debug:
+            if self.debug or debug:
                 print("{0} exists.".format(savename))
             if force is False:
+                if self.debug or debug:
+                    print("{0} exists. Not downloading again".format(savename))                
                 return False
             else:
-                print("Downloading again.")
+                if self.debug or debug:
+                    print("{0} exists. Downloading again".format(savename))                
                   
         ## Download data
         data, response = self.downloadURL(url)
@@ -545,6 +549,38 @@ class utilsCDandLP(utilsBase):
             m.update(val.encode('utf-8'))
         hashval = m.hexdigest()
         artistID  = str(int(hashval, 16) % int(1e9))
+        return artistID
+    
+
+################################################################################################################
+# MusixMatch
+################################################################################################################
+class utilsMusixMatch(utilsBase):
+    def __init__(self, disc=None):
+        super().__init__(disc)
+        self.baseURL = "https://www.musixmatch.com/artist/"
+        self.relURL  = "/artist/"
+        
+    def getArtistID(self, href, debug=False):
+        if href.startswith(self.baseURL):
+            if debug:
+                print("Removing {0} from url --> {1}".format(self.baseURL,href))
+            href = href[len(self.baseURL):]        
+        if href.startswith(self.relURL):
+            if debug:
+                print("Removing {0} from url --> {1}".format(self.relURL,href))
+            href = href[len(self.relURL):]
+        if href.endswith("/"):
+            href = href[:-1]
+        if href.startswith("/"):
+            href = href[1:]
+        if debug:
+            print("Raw URL: {0}".format(name))
+        m = md5()
+        for val in href.split(" "):
+            m.update(val.encode('utf-8'))
+        hashval = m.hexdigest()
+        artistID  = str(int(hashval, 16) % int(1e10))
         return artistID
     
     

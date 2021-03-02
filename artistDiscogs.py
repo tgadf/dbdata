@@ -3,11 +3,13 @@ from artistDBBase import artistDBNameClass, artistDBMetaClass, artistDBIDClass, 
 from artistDBBase import artistDBProfileClass, artistDBMediaClass, artistDBMediaAlbumClass
 from artistDBBase import artistDBMediaDataClass, artistDBMediaCountsClass
 from strUtils import fixName
+from dbUtils import utilsDiscogs
 
 
 class artistDiscogs(artistDBBase):
     def __init__(self, debug=False):
         super().__init__(debug)
+        self.dutils = utilsDiscogs()
         
         
     ##############################################################################################################################
@@ -124,29 +126,13 @@ class artistDiscogs(artistDBBase):
 
     ##############################################################################################################################
     ## Artist ID
-    ##############################################################################################################################                
+    ##############################################################################################################################
     def getID(self, suburl):
-        ival = "/artist"
-        if isinstance(suburl, artistDBURLClass):
-            suburl = suburl.url
-        if not isinstance(suburl, str):
-            aic = artistDBIDClass(err="NotStr")            
-            return aic
-
-        pos = suburl.find(ival)
-        if pos == -1:
-            aic = artistDBIDClass(err="NotArtist")            
-            return aic
-
-        data = suburl[pos+len(ival)+1:]
-        pos  = data.find("-")
-        discID = data[:pos]
         try:
-            int(discID)
+            discID   = self.dutils.getArtistID(suburl.url)
         except:
-            aic = artistDBIDClass(err="NotInt")            
-            return aic
-
+            aic = artistDBIDClass(err="IDError")            
+            return aic            
         aic = artistDBIDClass(ID=discID)
         return aic
 

@@ -50,6 +50,7 @@ class artistAllMusic(artistDBBase):
                         artist = fixName(artistName)
                         anc = artistDBNameClass(name=artist, err=None)
                     else:
+                        artist = "?"
                         anc = artistDBNameClass(name=artist, err="Fix")
                 else:
                     anc = artistDBNameClass(err="NoH1")

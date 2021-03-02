@@ -104,11 +104,13 @@ class dbArtistsDiscogs:
             print("Found {0} artists".format(len(artistDB)))
                 
         iArtist = 0
-        for href, hrefData in artistDB.items():
+        for ia,(href, hrefData) in enumerate(artistDB.items()):
             iArtist += 1
             if iArtist > maxArtists:
                 break
             if href.startswith("/artist") is False:
+                if debug:
+                    print("href [{0}] does not start with /artist".format(href))
                 continue
         
             discID   = self.dutils.getArtistID(href)
@@ -118,9 +120,16 @@ class dbArtistsDiscogs:
             print(iArtist,'/',len(artistDB),'\t:',len(discID),'\t',url)
             if isFile(savename):
                 if force is False:
+                    if debug:
+                        print("--> File exists.")
                     continue
 
-            self.downloadArtistURL(url, savename, force=force, sleeptime=self.sleeptime)
+            if debug:
+                print("Downloading {0} to {1} (Force={2})".format(url, savename, force))
+            retval = self.dutils.downloadArtistURL(url, savename, force=force, debug=True)
+            #retval = self.dutils.downloadArtistURL(url, savename, force=force, sleeptime=self.sleeptime, 
+            if debug:
+                print("Finished Downloading: Result is {0}".format(retval))
             
     
     def getSearchArtistURL(self, artist):

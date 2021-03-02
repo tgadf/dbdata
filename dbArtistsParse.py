@@ -273,6 +273,7 @@ class dbArtistsAssertCredit(dbArtistsBase):
         self.dbArtists = dbArtists
         self.metadata = {}
         
+        self.ignores={'0000443702': 'a lee', '0003182105': 'a mase', '0000920605': 'a carrillo', '0000576005': 'a jones', '0001550818': 'a p project', '0001675418': 'orazio mori', '0003137018': 'jude okoye', '0002486218': 'sim simi', '0000587118': 'scott dente phil keaggy wes king', '0003172118': 'waje', '0002204118': 'kazufumi matsunaga', '0002191318': 'stanley rosenzweig', '0000463818': 'michael guzei', '0001080218': 'r b king', '0002174618': 'ernesto halffter', '0002044118': 'abeti', '0003013918': 'aster murphy', '0001792518': 'gétatchew adamassu', '0003442018': 'emilia morton', '0003527718': 'jessa mae gabon', '0001334418': 'iwan sujono', '0002476018': 'the preachers', '0003994618': 'bak balint', '0001650818': 'eno mocchiutti', '0000640718': 'kwame hadi', '0000222718': 'joey b ellis tynetta hare', '0001516818': 'pappy tipton', '0001745218': 'sheriff roosevelt', '0001644418': 'ballet theater orchestra', '0001461018': 'bussy caine', '0001836118': 'matt king', '0000750018': 'paul f wells', '0001932618': 'jon senge', '0001962518': 'brigitte senge', '0001969618': 'fatoumata haidara', '0002150018': 'paul cut clear watson', '0002172618': 'edmund najera', '0002323318': 'tom glass', '0001054318': 'sandra akanke isidore', '0003725518': 'blk jck', '0002592718': 'baily bridges', '0003333318': 'mike de jager', '0000102218': 'the helicopters', '0001611518': 'jabu mdluli', '0000040218': 'surfers for satan', '0001971618': 'riku purtola', '0002469418': 'riku karvonen', '0001904018': 'shukuma black mambazo', '0001432018': 'wendy malan', '0001797718': 'milton mazibuko', '0003223618': 'deli mazibuko', '0000731318': 'russel kwan', '0003326018': 'plüsh', '0001068718': 'sibongiseni mbanjwa', '0001840618': 'abdoul gadir salem', '0002066818': 'muhammad gubara', '0001987118': 'saida parker', '0001216918': 'aziz goksel', '0000724918': 'zmoke da don', '0003907818': 'adam peter mills', '0002894518': 'ignatius ebayus', '0001532918': 'dick ncube trio', '0001535418': 'albert nyathi', '0001012418': 'vibes', '0003757218': 'francois luambo', '0002310618': 'chad', '0001800119': 'a dent', '0002260422': 'yu yu wang', '0000572322': 'a carlos', '0000181336': 'm dean', '0000639849': 'a mafia', '0000920463': 'a g', '0001780169': 'gt clinton', '0002207470': 'mao yuan', '0003108073': 'a muhammad jones', '0003198676': 'x x', '0003807477': 'nils', '0001581977': 'a moe', '0003288278': 'aminata kabba', '0002792878': 'a ron', '0003789984': 'antonio josé orozco ferrón', '0003071484': 'm dean', '0001390984': 'a lee', '0000588289': 'brian eno skin rachid taha', '0002153389': 'the producer', '0003221789': 'rachel coe', '0001040889': 'tshila', '0003637389': 'henry nkhata', '0003509189': 'simon magaya', '0001579889': 'machache baloyi', '0002428689': 'solomon dykes', '0001839089': 'pépé kallé with empie bakuba', '0001095389': 'chad'}
         
     def parse(self):
         for modVal in range(100):
@@ -298,6 +299,9 @@ class dbArtistsAssertCredit(dbArtistsBase):
     
     def downloadUnknownArtistCredits(self):
         for artistID,artistIDData in self.metadata.items():
+            if artistID in self.ignores.keys():
+                print("Ignoring {0} artistID".format(artistID))
+                continue
             savename = self.dutils.getArtistSavename(artistID, credit=True)
             if isFile(savename):
                 continue
