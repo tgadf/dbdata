@@ -7,6 +7,7 @@ from webUtils import getHTML
 from fileUtils import getBaseFilename
 from fsUtils import isFile, setDir, setFile
 from searchUtils import findExt
+from time import sleep
 
 
 ##################################################################################################################
@@ -58,7 +59,11 @@ class dbArtistsKWorbiTunes:
             else:
                 fullURL = "{0}/{1}".format(self.youtubeURL, quote(url))
                 print("{0}/{1}".format(i,len(data)),"\t-\t",savename,'\t',fullURL,'\t',name)
-                self.dutils.downloadArtistURL(url=fullURL, savename=savename, force=True)
+                try:
+                    self.dutils.downloadArtistURL(url=fullURL, savename=savename, force=True)
+                except:
+                    print("  ---> Error")
+                    sleep(1)
     
     
     ##################################################################################################################

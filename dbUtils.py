@@ -320,12 +320,31 @@ class utilsRateYourMusic(utilsBase):
         super().__init__(disc)
         
         
-    def getArtistID(self, name, debug=False):
-        m = md5()
-        for val in name.split(" "):
-            m.update(val.encode('utf-8'))
-        hashval = m.hexdigest()
-        artistID  = str(int(hashval, 16) % int(1e10))
+    def getArtistID(self, bsdata, debug=False):
+        ipt = bsdata.find("input", {"class": "rym_shortcut"})
+        artistID = None
+        if ipt is None:
+            ipt = bsdata.find("input", {"class": "album_shortcut"})
+            if ipt is None:
+                if debug:
+                    print("There is not <input> class...")
+                return none
+        
+        try:
+            value = ipt['value']
+        except:
+            if debug:
+                print("There is not value in the <input> class")
+            return None
+        
+        if value.startswith("[Artist") and value.endswith("]"):
+            try:
+                artistID = str(int(value[7:-1]))
+            except:
+                if debug:
+                    print("Could not extract artistID from {0}".format(value))
+                return None
+                
         return artistID
     
 

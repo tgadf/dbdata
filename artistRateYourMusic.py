@@ -58,6 +58,12 @@ class artistRateYourMusic(artistDBBase):
         if len(artistName) > 0:
             artistName = fixName(artistName)
             artistNativeName = fixName(artistNativeName)
+            
+            if artistName.endswith("]"):
+                artistName = artistName.split(" [")[0].strip()
+            if artistNativeName.endswith("]"):
+                artistNativeName = artistNativeName.split(" [")[0].strip()
+            
             anc = artistDBNameClass(name=artistName, native=artistNativeName, err=None)
         else:
             anc = artistDBNameClass(name=artistName, err="Fix")
@@ -109,7 +115,7 @@ class artistRateYourMusic(artistDBBase):
     ## Artist ID
     ##############################################################################################################################
     def getID(self, artist):
-        discID = self.dbUtils.getArtistID(artist.name)
+        discID = self.dbUtils.getArtistID(self.bsdata, debug=True)
         aic = artistDBIDClass(ID=discID)
         return aic
 
