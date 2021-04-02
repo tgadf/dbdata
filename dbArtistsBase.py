@@ -8,8 +8,9 @@ from os import path
 
 class dbArtistsBase:
     def __init__(self, dbArtists, basedir=None, debug=False):
-        self.previousDays = None
-        self.force        = False
+        self.previousDays  = None
+        self.previousHours = None
+        self.force         = False
         
         #######################
         ## File Type
@@ -114,9 +115,11 @@ class dbArtistsBase:
         return files
     
 
-    def getArtistFiles(self, modVal, previousDays=None, force=False):
+    def getArtistFiles(self, modVal, previousDays=None, previousHours=None, force=False):
         if previousDays is None:
             previousDays = self.previousDays
+        if previousHours is None:
+            previousHours = self.previousHours
             
         dirVal = self.getModValDir(modVal)
         files  = self.getAllFiles(dirVal)
