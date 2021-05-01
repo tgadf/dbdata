@@ -145,9 +145,10 @@ class artistKWorbSpotify(artistDBBase):
                         trackArtistURL = trackArtistURL.attrs['href']
                     trackArtistName = trackData["Track"].text
                     trackArtists.append({"Artist": trackArtistName, "URL": trackArtistURL})
+                
+                code = self.dbUtils.getAlbumCode(name=trackName, url=trackURL)
 
-
-                amdc = artistDBMediaDataClass(album=trackName, url=trackURL, aclass=None, aformat=None, artist=trackArtists, code=None, year=trackYear)
+                amdc = artistDBMediaDataClass(album=trackName, url=trackURL, aclass=None, aformat=None, artist=trackArtists, code=code, year=trackYear)
                 if amc.media.get(mediaType) is None:
                     amc.media[mediaType] = []
                 amc.media[mediaType].append(amdc)        

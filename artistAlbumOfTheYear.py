@@ -194,7 +194,9 @@ class artistAlbumOfTheYear(artistDBBase):
             else:
                 mediaType = "Albums"
                 
-            amdc = artistDBMediaDataClass(album=albumTitle, url=albumHREF, aclass=None, aformat=None, artist=[artist.name], code=None, year=albumYear)
+            code = self.dutils.getAlbumCode(name=albumTitle, url=albumHREF)
+                
+            amdc = artistDBMediaDataClass(album=albumTitle, url=albumHREF, aclass=None, aformat=None, artist=[artist.name], code=code, year=albumYear)
             if amc.media.get(mediaType) is None:
                 amc.media[mediaType] = []
             amc.media[mediaType].append(amdc)

@@ -17,7 +17,7 @@ class dbArtistsPrimary(dbArtistsBase):
         
         
     def parse(self, modVal, previousDays=None, force=False, debug=False):
-        newFiles = self.getArtistFiles(modVal, previousDays, force)
+        newFiles = self.getArtistFiles(modVal=modVal, previousDays=previousDays, force=force)
         dbdata   = self.getDBData(modVal, force)
 
         newData  = 0
@@ -36,6 +36,7 @@ class dbArtistsPrimary(dbArtistsBase):
             dbdata[artistID] = info
             newData += 1
             
+        #print("Done with loop: {0}".format(newData))
         if newData > 0:
             self.saveDBData(modVal, dbdata, newData)
             

@@ -4,7 +4,10 @@ from dbBase import dbBase
 import urllib
 from urllib.parse import quote
 from webUtils import getHTML
-from fsUtils import isFile
+from fsUtils import isFile, setFile
+from multiArtist import multiartist
+from ioUtils import getFile, saveFile
+from time import sleep
 
 
 
@@ -156,7 +159,7 @@ class dbArtistsLastFM:
 
         return ignores
         
-    def assertDBModValExtraData(self, modVal, maxPages=None, allowMulti=False, test=True):
+    def assertDBModValExtraData(self, modVal, minPages=1, maxPages=None, allowMulti=False, test=True):
         mulArts             = multiartist()        
         
         print("assertDBModValExtraData(",modVal,")")
@@ -168,13 +171,15 @@ class dbArtistsLastFM:
 
         
         for artistID,artistData in dbdata.items():
+            first = True
             pages = artistData.pages
             if pages.more is True:
                 npages = pages.tot
+                if npages < minPages:
+                    continue
                 if maxPages is not None:
                     npages = min([npages, maxPages])
                 artistRef = artistData.url.url
-                print(artistID,'\t',artistData.artist.name)
                 if artistData.artist.name in ignores:
                     print("\tNot downloading artist in ignore list: {0}".format(artistData.artist.name))
                     continue
@@ -183,7 +188,8 @@ class dbArtistsLastFM:
                 multiValues = mulArts.getArtistNames(artistData.artist.name)
                 if len(multiValues) > 1:
                     if allowMulti is False:
-                        print("\tNot downloading multis: {0}".format(multiValues.keys()))
+                        if self.debug:
+                            print("\tNot downloading multis: {0}".format(multiValues.keys()))
                         continue
                 
                 if sum([x == artistData.artist.name for x in self.artistIgnoreList()]) > 0:
@@ -192,13 +198,17 @@ class dbArtistsLastFM:
                     
                 for p in range(2, npages+1):
                     url      = self.getArtistURL(artistRef, p)
-                    savename = self.getArtistSavename(artistID, p)
-                    print(artistID,'\t',url,'\t',savename)
-                    print("\t---> {0} / {1}".format(p, npages))
+                    savename = self.dutils.getArtistSavename(artistID, p)
+                    #print("\t---> {0} / {1}".format(p, pages.tot))
                     if test is True:
                         print("\t\tWill download: {0}".format(url))
                         print("\t\tJust testing... Will not download anything.")
                         continue
                     if not isFile(savename):
-                        self.downloadArtistURL(url=url, savename=savename, force=True)
+                        if first:
+                            print("{0: <20}{1: <10}{2}".format(artistID,pages.tot,artistData.artist.name))
+                            first = False
+
+                        print("{0: <20}{1: <10}{2}".format(artistID, "{0}/{1}".format(p,pages.tot), url))
+                        self.dutils.downloadArtistURL(url=url, savename=savename, force=True)
                         sleep(3)

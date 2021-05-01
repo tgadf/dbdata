@@ -141,8 +141,10 @@ class artistKWorbiTunes(artistDBBase):
                             title = name
                         if amc.media.get(mediaType) is None:
                             amc.media[mediaType] = []
+                
+                        code = self.dbUtils.getAlbumCode(name=title, url=mediaType)
 
-                        amdc = artistDBMediaDataClass(album=title, url=None, aclass=None, aformat=None, artist=artist, code=None, year=None)
+                        amdc = artistDBMediaDataClass(album=title, url=None, aclass=None, aformat=None, artist=artist, code=code, year=None)
                         if amc.media.get(mediaType) is None:
                             amc.media[mediaType] = []
                         amc.media[mediaType].append(amdc)                            

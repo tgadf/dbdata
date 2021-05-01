@@ -364,6 +364,16 @@ class utilsDeezer(utilsBase):
             print("Could not determine artistID from URL {0}".format(url))
         
         return artistID
+        
+        
+    def getAlbumCode(self, name, url=None):
+        m = md5()
+        m.update(name.encode('utf-8'))
+        if url is not None:
+            m.update(url.encode('utf-8'))
+        hashval = m.hexdigest()
+        code    = str(int(hashval, 16) % int(1e7))
+        return code
     
 
 ################################################################################################################
@@ -414,6 +424,16 @@ class utilsKWorbSpotify(utilsBase):
         hashval = m.hexdigest()
         artistID  = str(int(hashval, 16) % int(1e12))
         return artistID
+        
+        
+    def getAlbumCode(self, name, url=None):
+        m = md5()
+        m.update(name.encode('utf-8'))
+        if url is not None:
+            m.update(url.encode('utf-8'))
+        hashval = m.hexdigest()
+        code    = str(int(hashval, 16) % int(1e7))
+        return code
     
 
 ################################################################################################################
@@ -432,6 +452,16 @@ class utilsKWorbYouTube(utilsBase):
         hashval = m.hexdigest()
         artistID  = str(int(hashval, 16) % int(1e12))
         return artistID
+        
+        
+    def getAlbumCode(self, name, url=None):
+        m = md5()
+        m.update(name.encode('utf-8'))
+        if url is not None:
+            m.update(url.encode('utf-8'))
+        hashval = m.hexdigest()
+        code    = str(int(hashval, 16) % int(1e7))
+        return code
     
 
 ################################################################################################################
@@ -450,6 +480,16 @@ class utilsKWorbiTunes(utilsBase):
         hashval = m.hexdigest()
         artistID  = str(int(hashval, 16) % int(1e12))
         return artistID
+        
+        
+    def getAlbumCode(self, name, url=None):
+        m = md5()
+        m.update(name.encode('utf-8'))
+        if url is not None:
+            m.update(url.encode('utf-8'))
+        hashval = m.hexdigest()
+        code    = str(int(hashval, 16) % int(1e7))
+        return code
     
 
 ################################################################################################################
@@ -532,6 +572,16 @@ class utilsAlbumOfTheYear(utilsBase):
             print("Found ID {0} from {1}".format(artistID, href))
             
         return artistID  
+        
+        
+    def getAlbumCode(self, name, url=None):
+        m = md5()
+        m.update(name.encode('utf-8'))
+        if url is not None:
+            m.update(url.encode('utf-8'))
+        hashval = m.hexdigest()
+        code    = str(int(hashval, 16) % int(1e7))
+        return code
     
 
 ################################################################################################################

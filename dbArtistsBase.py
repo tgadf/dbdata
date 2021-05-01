@@ -80,14 +80,23 @@ class dbArtistsBase:
         
     def getDBData(self, modVal, force=False):
         dbname = self.disc.getArtistsDBModValFilename(modVal)
+        dbdata = {}
+        localForce = False
         if self.credit is True or self.extra is True:
-            force=False
-        if force is False:
+            localForce=False
+        else:
+            localForce=force
+
+        if isFile(dbname) is False:
+            localForce = True
+
+        if localForce is False:
+            print("Loading {0}".format(dbname))
             dbdata = getFile(dbname, version=3)
             print("  ===> Found {0} previous data for ModVal={1}".format(len(dbdata), modVal))
         else:
             print("  ===> Forcing Reloads of ModVal={0}".format(modVal))
-            dbdata = {}
+        
         return dbdata
     
         

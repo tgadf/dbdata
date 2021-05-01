@@ -161,8 +161,10 @@ class artistKWorbYouTube(artistDBBase):
                 
                 if len(trackName.strip()) == 0:
                     continue
+                
+                code = self.dbUtils.getAlbumCode(name=trackName, url=trackURL)
 
-                amdc = artistDBMediaDataClass(album=trackName, url=trackURL, aclass=None, aformat=None, artist=artistName, code=None, year=None)
+                amdc = artistDBMediaDataClass(album=trackName, url=trackURL, aclass=None, aformat=None, artist=artistName, code=code, year=None)
                 if amc.media.get(mediaType) is None:
                     amc.media[mediaType] = []
                 amc.media[mediaType].append(amdc)        

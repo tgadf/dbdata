@@ -26,7 +26,7 @@ setup(
       'artistAB', 'dbArtistsAceBootlegs', 
       'artistCL', 'dbArtistsCDandLP', 
       'artistDP', 'dbArtistsDatPiff', 
-      'artistMS', 'dbArtistsMusicStack',
+      'artistMD', 'dbArtistsMusicStack',
       'dbArtistsParse'],
   version = '0.0.1',
   data_files = [],

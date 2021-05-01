@@ -159,27 +159,29 @@ class artistDeezer(artistDBBase):
     ##############################################################################################################################
     ## Artist Media
     ############################################################################################################################## 
-    def getMedia(self, artist):
-        amc  = artistDBMediaClass()
-        name = "Albums"
-        amc.media[name] = []
-        
+    def getMediaSingles(self):
         mediaType = "Singles"
+        media = []
         
         div = self.bsdata.find("div", {"class": "naboo-head-artist-music"})
         if div is None:
-            print("No tracks!")
-            return amc
+            if self.debug:
+                print("No tracks!")
+            return media
             
            
         table = div.find("table")
         if table is None:
-            #print("No track table")
-            return amc
+            if self.debug:
+                print("No track table")
+            return media
             
         trs = table.findAll("tr")
+        if self.debug:
+            print("Found {0} track rows".format(len(trs)))
         for itr,tr in enumerate(trs):
-            #print(itr,'/',len(trs),'\t',len(tr.findAll("td")))
+            if self.debug:
+                print("  ",itr,'/',len(trs),'\t',len(tr.findAll("td")))
             
             track  = tr.find("td", {"class": "track"})
             title  = None
@@ -205,15 +207,89 @@ class artistDeezer(artistDBBase):
                 if ref:
                     albumURL  = ref.attrs['href']
                     albumName = ref.text
-            
+                   
+            if self.debug:
+                print("Album Data: [Title={0}] , [URL={1}] , [Artist={2}]".format(title, albumURL, artistName))
             if not all([title,albumURL,artistName]):
                 continue
-            #print(title,'\t',albumURL,'\t',artistName)
-            amdc = artistDBMediaDataClass(album=title, url=albumURL, aclass=None, aformat=None, artist=[artistName], code=None, year=None)
-            if amc.media.get(mediaType) is None:
-                amc.media[mediaType] = []
-            amc.media[mediaType].append(amdc)
+                
+            code = self.dutils.getAlbumCode(name=title, url=albumURL)
 
+            #print(title,'\t',albumURL,'\t',artistName)
+            amdc = artistDBMediaDataClass(album=title, url=albumURL, aclass=None, aformat=None, artist=[artistName], code=code, year=None)        
+            media.append(amdc)
+    
+        return media
+    
+    
+    def getMediaAlbums(self):
+        mediaType = "Albums"
+        media = []
+        
+        div = self.bsdata.find("div", {"class": "naboo_discography_album"})
+        if div is None:
+            if self.debug:
+                print("No tracks!")
+            return media
+            
+        table = div.find("table")
+        if table is None:
+            if self.debug:
+                print("No album table")
+            return media
+            
+        trs = table.findAll("tr")
+        if self.debug:
+            print("Found {0} track rows".format(len(trs)))
+        for itr,tr in enumerate(trs):
+            if self.debug:
+                print("  ",itr,'/',len(trs),'\t',len(tr.findAll("td")))
+            
+            track  = tr.find("td", {"class": "track"})
+            title  = None
+            if track is not None:
+                span  = track.find("span", {"itemprop": "name"})
+                if span is not None:
+                    title = span.text.strip()
+    
+            artist = tr.find("td", {"class": "artist"})
+            artistURL = None
+            artistName = None
+            if artist is not None:
+                ref = artist.find("a", {"itemprop": "byArtist"})
+                if ref:
+                    artistURL  = ref.attrs['href']
+                    artistName = ref.text
+        
+            album  = tr.find("td", {"class": "album"})
+            albumURL  = None
+            albumName = None
+            if album is not None:
+                ref = album.find("a", {"itemprop": "inAlbum"})
+                if ref:
+                    albumURL  = ref.attrs['href']
+                    albumName = ref.text
+                   
+            if self.debug:
+                print("Album Data: [Title={0}] , [URL={1}] , [Artist={2}]".format(title, albumURL, artistName))
+            if not all([title,albumURL,artistName]):
+                continue
+                
+            code = self.dutils.getAlbumCode(name=title, url=albumURL)
+
+            #print(title,'\t',albumURL,'\t',artistName)
+            amdc = artistDBMediaDataClass(album=title, url=albumURL, aclass=None, aformat=None, artist=[artistName], code=code, year=None)        
+            media.append(amdc)
+    
+        return media
+    
+    
+    def getMedia(self, artist):
+        amc  = artistDBMediaClass()
+        
+        amc.media["Singles"] = self.getMediaSingles()
+        amc.media["Albums"]  = self.getMediaAlbums()
+        
         return amc
     
     
