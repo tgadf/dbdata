@@ -4,7 +4,10 @@ from dbBase import dbBase
 import urllib
 from urllib.parse import quote
 from webUtils import getHTML
-from fsUtils import isFile
+from fsUtils import isFile, setFile, removeFile
+from ioUtils import getFile, saveFile
+from time import sleep
+
 
 
 ##################################################################################################################
@@ -133,3 +136,63 @@ class dbArtistsMusicBrainz:
             return False
 
         self.parseSearchArtist(artist, data, maxArtists, force, debug)
+        
+        
+    def assertDBModValExtraData(self, modVal, minPages=1, maxPages=None, allowMulti=False, test=True, clean=True):
+        print("assertDBModValExtraData(",modVal,")")
+        artistDBDir = self.disc.getArtistsDBDir()
+        dbname  = setFile(artistDBDir, "{0}-DB.p".format(modVal))     
+        dbdata  = getFile(dbname)
+        nerrs   = 0
+        #ignores = self.artistIgnoreList()
+
+        
+        for artistID,artistData in dbdata.items():
+            first = True
+            pages = artistData.pages
+            if pages.more is True:
+                npages = pages.pages
+                if npages < minPages:
+                    continue
+                if maxPages is not None:
+                    npages = min([npages, maxPages])
+                artistRef = artistData.url.url
+                #if artistData.artist.name in ignores:
+                #    print("\tNot downloading artist in ignore list: {0}".format(artistData.artist.name))
+                #    continue
+                    
+                #savename = self.dutils.getArtistSavename(artistID)
+                #removeFile(savename)
+                #print("\t---> {0} / {1}   {2}".format(1, pages.pages, savename))
+
+                #print(artistID,'\t',npages,'\t')
+                #continue
+                    
+                    
+                for p in range(1, npages+1):
+                    if p == 1:
+                        url      = self.getArtistURL(artistRef)
+                        savename = self.dutils.getArtistSavename(artistID)
+                    else:
+                        url      = self.getArtistURL(artistRef, p)
+                        savename = self.dutils.getArtistSavename(artistID, p)
+                    print("\t---> {0} / {1}   {2}".format(p, pages.pages, url))
+                    
+                    if clean is True:
+                        if isFile(savename):
+                            print("Removing {0}".format(savename))
+                            removeFile(savename)
+                        
+                    if test is True:
+                        print("\t\tWill download: {0}".format(url))
+                        print("\t\tJust testing... Will not download anything.")
+                        continue
+                        
+                    if not isFile(savename):
+                        if first:
+                            print("{0: <20}{1: <10}{2}".format(artistID,pages.tot,artistData.artist.name))
+                            first = False
+
+                        print("{0: <20}{1: <10}{2}".format(artistID, "{0}/{1}".format(p,pages.pages), url))
+                        self.dutils.downloadArtistURL(url=url, savename=savename, force=True)
+                        sleep(3)

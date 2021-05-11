@@ -2,6 +2,7 @@ from hashlib import md5, blake2b, sha256, sha1
 import urllib
 from fsUtils import mkSubDir, setFile, isFile
 from fileUtils import getBaseFilename
+from webUtils import isBS4
 from ioUtils import saveFile
 from time import sleep
 from urllib.parse import quote
@@ -111,26 +112,51 @@ class utilsAllMusic(utilsBase):
             if debug:
                 print("Could not get artist disc ID from None!")
             return None
-        
+
+        ### Test For crucial part of URL
         ival = "/artist"
-        pos = href.find(ival)
-        if pos == -1:
+        if href.find(ival) == -1:
             if debug:
-                print("Could not find discID in {0}".format(suburl))
+                print("Could not find {0} in {1}".format(ival,href))
             return None
 
-        data = href[pos+len(ival)+1:]
-        pos  = data.rfind("-")
-        artistIDURL = data[(pos+3):]       
-        artistID = artistIDURL.split("/")[0]
-        try:
-            data = href[pos+len(ival)+1:]
-            pos  = data.rfind("-")
-            artistIDURL = data[(pos+3):]       
-            artistID = artistIDURL.split("/")[0]
-        except:
-            print("Could not extract discID from {0}".format(href))
-            return None
+        
+        ### There are two kinds of URLs: Those with the artist URL=name-{ID} and those with URL={ID}
+        midpos = href.find(ival)
+        data   = href[midpos+len(ival)+1:]
+        if debug:
+            print("suburl={0}".format(data))
+        
+        ### data is now everything after the /artist/ part of the URL
+        ### Test for URL=name-{ID}
+        pos = data.rfind('-')
+        if debug:
+            print("rfind(-) = {0}".format(pos))
+        if pos == -1:
+            artistID = data
+        else:
+            artistID = data[(pos+1):]
+            #artistIDURL = data[(pos+3):]
+            #artistID = artistIDURL.split("/")[0]
+
+        if debug:
+            print("rawID={0}".format(artistID))
+            
+        ### Remove mn if there
+        if artistID.startswith("mn"):
+            artistID = artistID[3:]
+        if debug:
+            print("ID={0}".format(artistID))
+            
+        if False:
+            try:
+                data = href[pos+len(ival)+1:]
+                pos  = data.rfind("-")
+                artistIDURL = data[(pos+3):]       
+                artistID = artistIDURL.split("/")[0]
+            except:
+                print("Could not extract discID from {0}".format(href))
+                return None
         
         try:
             int(artistID)
@@ -321,6 +347,11 @@ class utilsRateYourMusic(utilsBase):
         
         
     def getArtistID(self, bsdata, debug=False):
+        if not isBS4(bsdata):
+            if debug is True:
+                print("Input is not BS4")
+            return None
+        
         ipt = bsdata.find("input", {"class": "rym_shortcut"})
         artistID = None
         if ipt is None:
@@ -358,6 +389,12 @@ class utilsDeezer(utilsBase):
         
     def getArtistID(self, url, debug=False):
         artistID = url.split("/")[-1]
+        
+        ## Remove everything after '?' if present
+        pos = artistID.find('?')
+        if pos != -1:
+            artistID = artistID[:pos]
+        
         try:
             str(int(artistID))
         except:
