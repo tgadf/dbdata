@@ -30,6 +30,22 @@ class dbArtistsAllMusic:
         url = "{0}/credits".format(artistRef)
         return url
     
+    def getArtistURLFromID(self, artistID, credit=False):
+        if str(artistID).startswith("mn"):
+            artistRef = "{0}artist/{1}".format(self.baseURL, artistID)
+        else:
+            try:
+                int(artistID)
+                artistRef = "{0}artist/mn{1}".format(self.baseURL, artistID)
+            except:
+                raise ValueError("Not sure how to get URL from [{0}]".format(artistID))
+                
+        if credit is True:
+            url = self.getArtistURLCredit(artistRef)
+        else:
+            url = self.getArtistURL(artistRef)
+        return url
+    
     def getArtistURL(self, artistRef, page=1):
         url = "{0}/discography/all".format(artistRef)
         return url

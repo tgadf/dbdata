@@ -287,30 +287,44 @@ class artistAllMusic(artistDBBase):
             header  = trs[0]
             ths     = header.findAll("th")
             headers = [x.text.strip() for x in ths]
-            
+            if len(headers) == 0:
+                continue
 
             for tr in trs[1:]:
                 tds = tr.findAll("td")
                 
                 ## Name
                 key = "Name"
-                if len(headers[1]) == 0:
-                    idx = 1
-                    mediaType = tds[idx].text.strip()
-                    if len(mediaType) == 0:
+                try:
+                    if len(headers[1]) == 0:
+                        idx = 1
+                        mediaType = tds[idx].text.strip()
+                        if len(mediaType) == 0:
+                            mediaType = name
+                    else:
                         mediaType = name
-                else:
-                    mediaType = name
+                except:
+                    #print("Error getting key: {0} from AllMusic media".format(key))
+                    break
 
                 ## Year
                 key  = "Year"
-                idx  = headers.index(key)
-                year = tds[idx].text.strip()
+                try:
+                    idx  = headers.index(key)
+                    year = tds[idx].text.strip()
+                except:
+                    #print("Error getting key: {0} from AllMusic media".format(key))
+                    continue
 
                 ## Title
                 key   = "Album"
-                idx   = headers.index(key)
-                ref   = tds[idx].findAll("a")
+                try:
+                    idx   = headers.index(key)
+                    ref   = tds[idx].findAll("a")
+                except:
+                    #print("Error getting key: {0} from AllMusic media".format(key))
+                    continue
+                    
                 try:
                     refdata = ref[0]
                     url     = refdata.attrs['href']
@@ -326,9 +340,10 @@ class artistAllMusic(artistDBBase):
                         code = discID
                     except:
                         code = None
-                        
                 except:
-                    print("Could not parse {0}".format(ref))
+                    url  = None
+                    code = None
+                    continue
 
                 amdc = artistDBMediaDataClass(album=album, url=url, aclass=None, aformat=None, artist=None, code=code, year=year)
                 if amc.media.get(mediaType) is None:

@@ -18,6 +18,7 @@ class dbArtistsPrimary(dbArtistsBase):
         
     def parse(self, modVal, previousDays=None, force=False, debug=False):
         newFiles = self.getArtistFiles(modVal=modVal, previousDays=previousDays, force=force)
+        print("Processing {0} new files for ModVal={1}".format(len(newFiles), modVal))
         dbdata   = self.getDBData(modVal, force)
 
         newData  = 0

@@ -115,7 +115,7 @@ class artistRateYourMusic(artistDBBase):
     ## Artist ID
     ##############################################################################################################################
     def getID(self, artist):
-        discID = self.dbUtils.getArtistID(self.bsdata, debug=True)
+        discID = self.dbUtils.getArtistID(self.bsdata, debug=False)
         aic = artistDBIDClass(ID=discID)
         return aic
 
@@ -235,10 +235,12 @@ class artistRateYourMusic(artistDBBase):
                         albumartists = [artistDBURLInfo(name=artist.name, url=url.url.replace("https://rateyourmusic.com", ""), ID=None)]
 
 
-                    amdc = artistDBMediaDataClass(album=album, url=albumurl, aclass=None, aformat=None, artist=albumartists, code=code, year=year)
+                    amdc = artistDBMediaDataClass(album=album, url=album, aclass=None, aformat=None, artist=albumartists, code=code, year=year)
                     if amc.media.get(mediaType) is None:
                         amc.media[mediaType] = []
                     amc.media[mediaType].append(amdc)
+                    #if self.debug:
+                    #    print("Found Album: [{0}/{1}] : {2}  /  {3}".format(len(amc.media[mediaType]), mediaType, code, album, album))
 
         
         

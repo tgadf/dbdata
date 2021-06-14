@@ -144,7 +144,7 @@ class utilsAllMusic(utilsBase):
             
         ### Remove mn if there
         if artistID.startswith("mn"):
-            artistID = artistID[3:]
+            artistID = artistID[2:]
         if debug:
             print("ID={0}".format(artistID))
             
@@ -177,6 +177,11 @@ class utilsAllMusic(utilsBase):
 class utilsMusicBrainz(utilsBase):
     def __init__(self, disc=None):
         super().__init__(disc)
+        
+        
+    def getMultiArtistID(self, hrefs, debug=False):
+        newArtistID = sum([int(self.getArtistID(href)) for href in hrefs])/len(hrefs)
+        return newArtistID
         
         
     def getArtistID(self, href, debug=False):
