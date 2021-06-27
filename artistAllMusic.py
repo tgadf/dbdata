@@ -116,7 +116,7 @@ class artistAllMusic(artistDBBase):
     ## Artist ID
     ##############################################################################################################################
     def getID(self, suburl):
-        discID = self.dbUtils.getArtistID(suburl.url)
+        discID = self.dbUtils.getArtistID(suburl.url, debug=False)
         aic = artistDBIDClass(ID=discID)
         return aic
     

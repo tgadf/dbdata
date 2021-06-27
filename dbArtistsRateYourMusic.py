@@ -20,8 +20,8 @@ class dbArtistsRateYourMusic:
         self.dutils = utilsRateYourMusic(self.disc)
         self.debug  = debug
         
-        self.baseURL   = "https://www.allmusic.com/"        
-        self.searchURL = "https://www.allmusic.com/search/"
+        self.baseURL   = "https://www.rateyourmusic.com/"        
+        self.searchURL = None
 
 
         

@@ -2,6 +2,7 @@ from artistDBBase import artistDBBase, artistDBDataClass
 from artistDBBase import artistDBNameClass, artistDBMetaClass, artistDBIDClass, artistDBURLClass, artistDBURLInfo, artistDBPageClass
 from artistDBBase import artistDBProfileClass, artistDBMediaClass, artistDBMediaAlbumClass
 from artistDBBase import artistDBMediaDataClass, artistDBMediaCountsClass
+from artistDBBase import artistDBLinkClass, artistDBTagClass
 from strUtils import fixName
 from dbUtils import utilsRateYourMusic
 from webUtils import removeTag
@@ -134,20 +135,40 @@ class artistRateYourMusic(artistDBBase):
     ## Artist Variations
     ##############################################################################################################################
     def getProfile(self):
-        data    = {}        
         profile = self.bsdata.find("div", {"class": "artist_info"})
-        
         headers = profile.findAll("div", {"class": "info_hdr"})
+        headers = [header.text for header in headers]
         content = profile.findAll("div", {"class": "info_content"})
-        
-        headers = [x.text for x in headers]
-        content = [x.text for x in content]
-        
-        data = dict(zip(headers, content))
+        profileData = dict(zip(headers, content))
+
+        data = {}
+        if profileData.get("Formed") is not None:
+            link     = profileData["Formed"].find("a", {"class": "location"})
+            data["Formed"] = artistDBLinkClass(link)
+
+        if profileData.get("Members") is not None:
+            links   = profileData["Members"].findAll("a", {"class": "artist"})
+            data["Members"] = [artistDBLinkClass(member) for member in links]
+
+        if profileData.get("Also Known As"):
+            tag = profileData["Also Known As"]
+            data["Also Known As"] = artistDBTagClass(tag)
+
+        if profileData.get("Genres") is not None:
+            links   = profileData["Genres"].findAll("a", {"class": "genre"})
+            data["Genres"]  = [artistDBLinkClass(genre) for genre in links]
+
+        if profileData.get("Notes"):
+            tag   = profileData["Notes"]
+            data["Notes"] = artistDBTagClass(tag)
+
+        if profileData.get("Share"):
+            tag   = profileData["Share"]
+            data["Share"] = artistDBTagClass(tag)
                
-        apc = artistDBProfileClass(profile=data.get("Formed"), aliases=data.get("Aliases"),
-                                 members=data.get("Members"), groups=data.get("In Groups"),
-                                 sites=data.get("Sites"), variations=data.get("Variations"))
+        apc = artistDBProfileClass(formed=data.get("Formed"), aliases=data.get("Also Known As"),
+                                 members=data.get("Members"), notes=data.get("Notes"),
+                                 genres=data.get("Genres"), share=data.get("Share"))
         return apc
 
     

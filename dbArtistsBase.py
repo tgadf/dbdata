@@ -17,6 +17,8 @@ class dbArtistsBase:
         #######################
         self.primary      = True
         self.credit       = False
+        self.song         = False
+        self.composition  = False
         self.extra        = False
         self.unofficial   = False
             
@@ -36,25 +38,47 @@ class dbArtistsBase:
         
         
     def setCredit(self):
-        self.credit     = True
-        self.primary    = False
-        self.extra      = False
-        self.unofficial = False
+        self.credit      = True
+        self.primary     = False
+        self.extra       = False
+        self.unofficial  = False
+        self.song        = False
+        self.composition = False
     def setPrimary(self):
-        self.credit     = False
-        self.primary    = True
-        self.extra      = False
-        self.unofficial = False
+        self.credit      = False
+        self.primary     = True
+        self.extra       = False
+        self.unofficial  = False
+        self.song        = False
+        self.composition = False
     def setExtra(self):
-        self.credit     = False
-        self.primary    = False
-        self.extra      = True
-        self.unofficial = False
+        self.credit      = False
+        self.primary     = False
+        self.extra       = True
+        self.unofficial  = False
+        self.song        = False
+        self.composition = False
     def setUnofficial(self):
-        self.credit     = False
-        self.primary    = False
-        self.extra      = False
-        self.unofficial = True
+        self.credit      = False
+        self.primary     = False
+        self.extra       = False
+        self.unofficial  = True
+        self.song        = False
+        self.composition = False
+    def setSong(self):
+        self.credit      = False
+        self.primary     = False
+        self.extra       = False
+        self.unofficial  = False
+        self.song        = True
+        self.composition = False
+    def setComposition(self):
+        self.credit      = False
+        self.primary     = False
+        self.extra       = False
+        self.unofficial  = False
+        self.song        = False
+        self.composition = True
         
         
         
@@ -82,7 +106,7 @@ class dbArtistsBase:
         dbname = self.disc.getArtistsDBModValFilename(modVal)
         dbdata = {}
         localForce = False
-        if self.credit is True or self.extra is True:
+        if self.credit is True or self.extra is True or self.song is True or self.composition is True:
             localForce=False
         else:
             localForce=force
@@ -112,6 +136,10 @@ class dbArtistsBase:
         dirVal = setDir(artistDir, str(modVal))
         if self.credit is True:
             dirVal = setDir(dirVal, "credit")
+        elif self.song is True:
+            dirVal = setDir(dirVal, "song")
+        elif self.composition is True:
+            dirVal = setDir(dirVal, "composition")
         elif self.extra is True:
             dirVal = setDir(dirVal, "extra")
         elif self.unofficial is True:

@@ -1,6 +1,6 @@
 from ioUtils import getFile
 from fsUtils import isFile
-from webUtils import getHTML, isBS4
+from webUtils import getHTML, isBS4, isBS4Tag
 from math import ceil, floor
 from dbBase import dbBase
 
@@ -12,6 +12,47 @@ class artistDBIDClass:
         
     def get(self):
         return self.__dict__
+    
+
+class artistDBTagClass:
+    def __init__(self, tag, err=None):
+        self.tag = tag
+        if not isBS4Tag(tag):
+            self.err = "NoTag"
+        
+    def get(self):
+        return self.__dict__
+    
+
+class artistDBTextClass:
+    def __init__(self, tag, err=None):
+        self.text  = None
+        self.err   = None
+        if isBS4Tag(tag):
+            self.text  = tag.text
+        else:
+            self.err = "NoTag"
+        
+    def get(self):
+        return self.__dict__
+    
+
+class artistDBLinkClass:
+    def __init__(self, link, err=None):
+        self.link  = link
+        self.err   = None
+        self.href  = None
+        self.text  = None
+        self.attrs = None
+        self.title = None
+        
+        if isBS4Tag(link):
+            self.attrs = link.attrs            
+            self.href  = self.attrs.get('href')
+            self.title = self.attrs.get('title')
+            self.text  = link.text
+        else:
+            self.err = "NoLink"
     
             
 class artistDBURLClass:
@@ -110,15 +151,20 @@ class artistDBPageClass:
 
 class artistDBProfileClass:
     def __init__(self, profile=None, aliases=None, members=None, sites=None, groups=None, 
-                 search=None, external=None, variations=None, err=None):
+                 formed=None, related=None, notes=None, share=None,
+                 genres=None, search=None, external=None, variations=None, err=None):
         self.profile    = profile
         self.aliases    = aliases
         self.members    = members
         self.sites      = sites
-        self.groups     = groups
-        self.variations = variations
+        self.formed     = formed
+        self.related    = related
+        self.notes      = notes
+        self.share      = share
+        self.genres     = genres
         self.search     = search
         self.external   = external
+        self.variations = variations
         self.err        = err
         
     def get(self):

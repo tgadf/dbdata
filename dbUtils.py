@@ -35,7 +35,7 @@ class utilsBase:
         return ival % modval
     
         
-    def getArtistSavename(self, artistID, page=1, credit=False, unofficial=False):
+    def getArtistSavename(self, artistID, page=1, credit=False, unofficial=False, song=False, composition=False):
         modValue  = self.getDiscIDHashMod(artistID=artistID, modval=self.maxModVal)
         if modValue is not None:
             outdir    = mkSubDir(self.artistDir, str(modValue))
@@ -44,6 +44,12 @@ class utilsBase:
                 savename  = setFile(outdir, artistID+"-{0}.p".format(page))
             elif credit is True:
                 outdir = mkSubDir(outdir, "credit")
+                savename  = setFile(outdir, artistID+".p")
+            elif composition is True:
+                outdir = mkSubDir(outdir, "composition")
+                savename  = setFile(outdir, artistID+".p")
+            elif song is True:
+                outdir = mkSubDir(outdir, "song")
                 savename  = setFile(outdir, artistID+".p")
             elif unofficial is True:
                 outdir = mkSubDir(outdir, "unofficial")
@@ -112,6 +118,11 @@ class utilsAllMusic(utilsBase):
             if debug:
                 print("Could not get artist disc ID from None!")
             return None
+        
+        ### Remove /discography if found
+        if href.endswith("/discography"):
+            href=href[:-12]
+            
 
         ### Test For crucial part of URL
         ival = "/artist"
@@ -127,6 +138,7 @@ class utilsAllMusic(utilsBase):
         if debug:
             print("suburl={0}".format(data))
         
+        
         ### data is now everything after the /artist/ part of the URL
         ### Test for URL=name-{ID}
         pos = data.rfind('-')
@@ -141,6 +153,7 @@ class utilsAllMusic(utilsBase):
 
         if debug:
             print("rawID={0}".format(artistID))
+            
             
         ### Remove mn if there
         if artistID.startswith("mn"):
@@ -565,6 +578,9 @@ class utilsGenius(utilsBase):
         name = "{0}{1}".format(self.baseURL,name)
         if debug:
             print("Full URL: {0}".format(name))
+        name = name.lower()
+        if debug:
+            print("Final URL: {0}".format(name))
         m = md5()
         for val in name.split(" "):
             m.update(val.encode('utf-8'))

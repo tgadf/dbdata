@@ -30,7 +30,15 @@ class dbArtistsAllMusic:
         url = "{0}/credits".format(artistRef)
         return url
     
-    def getArtistURLFromID(self, artistID, credit=False):
+    def getArtistURLCompostion(self, artistRef, page=1):
+        url = "{0}/compositions".format(artistRef)
+        return url
+    
+    def getArtistURLSong(self, artistRef, page=1):
+        url = "{0}/songs".format(artistRef)
+        return url
+    
+    def getArtistURLFromID(self, artistID, credit=False, song=False, composition=False):
         if str(artistID).startswith("mn"):
             artistRef = "{0}artist/{1}".format(self.baseURL, artistID)
         else:
@@ -42,6 +50,10 @@ class dbArtistsAllMusic:
                 
         if credit is True:
             url = self.getArtistURLCredit(artistRef)
+        elif song is True:
+            url = self.getArtistURLSong(artistRef)
+        elif composition is True:
+            url = self.getArtistURLComposition(artistRef)
         else:
             url = self.getArtistURL(artistRef)
         return url
@@ -147,6 +159,153 @@ class dbArtistsAllMusic:
             return False
 
         self.parseSearchArtist(artist, data, maxArtists, force, debug)
+    
+        
+        
+    ##################################################################################################################
+    #
+    # Search Functions (w/ Song)
+    #
+    ##################################################################################################################
+    def searchForArtistSong(self, artist, artistID, force=False):
+        print("\n\n===================== Searching Songs For {0} , {1} =====================".format(artist, artistID))
+        url = self.getSearchArtistURL(artist)
+        if url is None:
+            raise ValueError("URL is None!")
+                    
+        ## Download data
+        data, response = self.dutils.downloadURL(url)
+        if response != 200:
+            print("Error downloading {0}".format(url))
+            return False
+    
+        self.parseSearchArtistSong(artist, artistID, data, force)
+        
+      
+    def parseSearchArtistSong(self, artist, artistID, data, force=False):
+        if data is None:
+            return None
+        
+        ## Parse data
+        bsdata = getHTML(data)
+        
+        artistDB  = {}
+        
+        uls = bsdata.findAll("ul", {"class": "search-results"})
+        for ul in uls:
+            lis = ul.findAll("li", {"class": "artist"})
+            for li in lis:
+                divs = li.findAll("div", {"class": "name"})
+                for div in divs:
+                    link     = div.find("a")
+                    href     = link.attrs['href']
+                    tooltip  = link.attrs['data-tooltip']
+                    try:
+                        from json import loads
+                        tooltip = loads(tooltip)
+                        linkartistID = tooltip['id']
+                    except:
+                        linkartistID = None
+            
+                    if artistDB.get(href) is None:
+                        artistDB[href] = {"N": 0, "Name": artist}
+                    artistDB[href]["N"] += 1
+        
+    
+        if self.debug:
+            print("Found {0} artists".format(len(artistDB)))
+                
+        iArtist = 0
+        for href, hrefData in artistDB.items():
+            iArtist += 1
+        
+            discID   = self.dutils.getArtistID(href)
+            if discID != artistID:
+                continue
+            url      = self.getArtistURLSong(href)
+            savename = self.dutils.getArtistSavename(discID, song=True)
+
+            print(iArtist,'/',len(artistDB),'\t:',discID,'\t',url)
+            
+            if isFile(savename):
+                if force is False:
+                    continue
+                    
+            self.dutils.downloadArtistURL(url, savename, force=force)
+
+    
+        
+        
+    ##################################################################################################################
+    #
+    # Search Functions (w/ Composition)
+    #
+    ##################################################################################################################
+    def searchForArtistComposition(self, artist, artistID, force=False):
+        print("\n\n===================== Searching Composition For  {0} , {1} =====================".format(artist, artistID))
+        url = self.getSearchArtistURL(artist)
+        if url is None:
+            raise ValueError("URL is None!")
+                    
+        ## Download data
+        data, response = self.dutils.downloadURL(url)
+        if response != 200:
+            print("Error downloading {0}".format(url))
+            return False
+    
+        self.parseSearchArtistComposition(artist, artistID, data, force)
+        
+      
+    def parseSearchArtistComposition(self, artist, artistID, data, force=False):
+        if data is None:
+            return None
+        
+        ## Parse data
+        bsdata = getHTML(data)
+        
+        artistDB  = {}
+        
+        uls = bsdata.findAll("ul", {"class": "search-results"})
+        for ul in uls:
+            lis = ul.findAll("li", {"class": "artist"})
+            for li in lis:
+                divs = li.findAll("div", {"class": "name"})
+                for div in divs:
+                    link     = div.find("a")
+                    href     = link.attrs['href']
+                    tooltip  = link.attrs['data-tooltip']
+                    try:
+                        from json import loads
+                        tooltip = loads(tooltip)
+                        linkartistID = tooltip['id']
+                    except:
+                        linkartistID = None
+            
+                    if artistDB.get(href) is None:
+                        artistDB[href] = {"N": 0, "Name": artist}
+                    artistDB[href]["N"] += 1
+        
+    
+        if self.debug:
+            print("Found {0} artists".format(len(artistDB)))
+                
+        iArtist = 0
+        for href, hrefData in artistDB.items():
+            iArtist += 1
+        
+            discID   = self.dutils.getArtistID(href)
+            if discID != artistID:
+                continue
+            url      = self.getArtistURLComposition(href)
+            savename = self.dutils.getArtistSavename(discID, composition=True)
+
+            print(iArtist,'/',len(artistDB),'\t:',discID,'\t',url)
+            
+            if isFile(savename):
+                if force is False:
+                    continue
+
+            self.dutils.downloadArtistURL(url, savename, force=force)
     
         
         

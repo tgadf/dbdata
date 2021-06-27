@@ -18,7 +18,7 @@ class dbArtistsPrimary(dbArtistsBase):
         
     def parse(self, modVal, previousDays=None, force=False, debug=False):
         newFiles = self.getArtistFiles(modVal=modVal, previousDays=previousDays, force=force)
-        print("Processing {0} new files for ModVal={1}".format(len(newFiles), modVal))
+        print("Processing {0} new files for ModVal={1} for {2}".format(len(newFiles), modVal,type(self.dbArtists)))
         dbdata   = self.getDBData(modVal, force)
 
         newData  = 0
@@ -29,10 +29,12 @@ class dbArtistsPrimary(dbArtistsBase):
             artistID = getBaseFilename(ifile)
             isKnown  = dbdata.get(artistID)
             info     = self.artist.getData(ifile)
-            #print("\t",ifile,' ==> ',info.ID.ID,' <-> ',artistID)
+            if debug:
+                print("\t",ifile,' ==> ',info.ID.ID,' <-> ',artistID)
             if info.ID.ID != artistID:
-                if self.debug is True:
-                    print("Error for {0}".format(info.meta.title))
+                if debug is True:
+                    print("Error for {0}  ID={1}  FileID={2}".format(info.meta.title,info.ID.ID,artistID))
+                    1/0
                 continue
             dbdata[artistID] = info
             newData += 1
@@ -263,6 +265,110 @@ class dbArtistsRawFiles(dbArtistsBase):
         #self.dbArtists.parseDownloadedFiles(previousDays=None, force=False)
 
             
+
+#################################################################################################################################
+#
+# Assert Songs (Find Songs For AllMusic)
+#
+#################################################################################################################################
+class dbArtistsAssertSong(dbArtistsBase):
+    def __init__(self, dbArtists):        
+        super().__init__(dbArtists)
+        self.setPrimary()
+        self.dbArtists = dbArtists
+        self.metadata = {}
+        self.ignores={}
+
+    def parse(self):
+        for modVal in range(100):
+            self.parseModVal(modVal)
+            print("{0}\t{1}".format(modVal,len(self.metadata)))
+            
+    def parseModVal(self, modVal):
+        newFiles = self.getArtistFiles(modVal, force=True)
+        force    = False
+        dbdata   = self.getDBData(modVal, force=force)
+
+        newData  = 0
+        for j,ifile in enumerate(newFiles):
+            artistID = getBaseFilename(ifile)
+            isKnown  = dbdata.get(artistID)
+            if isKnown is None:
+                info     = self.artist.getData(ifile)
+                meta     = info.meta
+                self.metadata[artistID] = {"title": meta.title, "url": meta.url}
+                
+    def getResults(self):
+        return self.metadata
+    
+    def downloadUnknownArtistSongs(self):
+        for artistID,artistIDData in self.metadata.items():
+            if artistID in self.ignores.keys():
+                print("Ignoring {0} artistID".format(artistID))
+                continue
+            savename = self.dutils.getArtistSavename(artistID, songs=True)
+            if isFile(savename):
+                continue
+            title  = artistIDData["title"]
+            title  = title.replace("Artist Search for ", "")
+            title  = title.replace(" | AllMusic", "")
+            artist = title[1:-1]
+            if len(artist) < 1:
+                continue
+            self.dbArtists.searchForArtistSongs(artist=artist, artistID=artistID)
+
+        
+#################################################################################################################################
+#
+# Assert Compositions (Find Compositions For AllMusic)
+#
+#################################################################################################################################
+class dbArtistsAssertComposition(dbArtistsBase):
+    def __init__(self, dbArtists):        
+        super().__init__(dbArtists)
+        self.setPrimary()
+        self.dbArtists = dbArtists
+        self.metadata = {}
+        self.ignores={}
+    
+    def parse(self):
+        for modVal in range(100):
+            self.parseModVal(modVal)
+            print("{0}\t{1}".format(modVal,len(self.metadata)))
+            
+    def parseModVal(self, modVal):
+        newFiles = self.getArtistFiles(modVal, force=True)
+        force    = False
+        dbdata   = self.getDBData(modVal, force=force)
+
+        newData  = 0
+        for j,ifile in enumerate(newFiles):
+            artistID = getBaseFilename(ifile)
+            isKnown  = dbdata.get(artistID)
+            if isKnown is None:
+                info     = self.artist.getData(ifile)
+                meta     = info.meta
+                self.metadata[artistID] = {"title": meta.title, "url": meta.url}
+                
+    def getResults(self):
+        return self.metadata
+    
+    def downloadUnknownArtistCompositions(self):
+        for artistID,artistIDData in self.metadata.items():
+            if artistID in self.ignores.keys():
+                print("Ignoring {0} artistID".format(artistID))
+                continue
+            savename = self.dutils.getArtistSavename(artistID, composition=True)
+            if isFile(savename):
+                continue
+            title  = artistIDData["title"]
+            title  = title.replace("Artist Search for ", "")
+            title  = title.replace(" | AllMusic", "")
+            artist = title[1:-1]
+            if len(artist) < 1:
+                continue
+            self.dbArtists.searchForArtistComposition(artist=artist, artistID=artistID)
+        
 
 #################################################################################################################################
 #

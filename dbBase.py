@@ -440,12 +440,6 @@ class dbBase():
 
     def getArtistIDToAlbumRefsData(self, debug=False):
         return self.getDBData("IDToAlbumRefs", "Artist", debug=debug)
-
-    def getArtistIDToCoreAlbumNamesData(self, debug=False):
-        return self.getDBData("IDToCoreAlbumNames", "Artist", debug=debug)
-
-    def getArtistIDToCoreAlbumRefsData(self, debug=False):
-        return self.getDBData("IDToCoreAlbumRefs", "Artist", debug=debug)
         
     def getArtistIDToGenreData(self, debug=False):
         return self.getDBData("IDToGenre", "Artist", debug=debug)
@@ -488,59 +482,6 @@ class dbBase():
     
     def getAlbumArtistMetaData(self, debug=False):
         return self.getDBData("ArtistMetaData", "Album")
-    
-    
-    ##################################  Collections ##################################
-    def getCollectionNameToIDData(self, debug=False):
-        return self.getDBData("NameToID", "Collection")
-        
-    def getCollectionNameToIDsData(self, debug=False):
-        return self.getDBData("NameToIDs", "Collection")
-    
-    def getCollectionNameToRefData(self, debug=False):
-        return self.getDBData("NameToRef", "Collection")
-        
-    def getCollectionNameToRefsData(self, debug=False):
-        return self.getDBData("NameToRefs", "Collection")
-
-    def getCollectionRefToIDData(self, debug=False):
-        return self.getDBData("RefToID", "Collection")
-    
-    def getCollectionRefToNameData(self, debug=False):
-        return self.getDBData("RefToName", "Collection")
-
-    def getCollectionIDToNameData(self, debug=False):
-        return self.getDBData("IDToName", "Collection")
-    
-    def getCollectionIDToRefData(self, debug=False):
-        return self.getDBData("IDToRef", "Collection")
-    
-    def getCollectionRefCountsData(self, debug=False):
-        return self.getDBData("RefCounts", "Collection")
-    
-    def getCollectionAlbumRefCountsData(self, debug=False):
-        return Counter(self.getDBData("AlbumRefCounts", "Collection"))
-    
-    def getCollectionAlbumRefArtistsData(self, debug=False):
-        return self.getDBData("AlbumRefArtists", "Collection")
-    
-    
-    
-    ##################################  Core Albums ##################################
-    def getArtistIDCoreAlbumNames(self, debug=False):
-        return self.getDBData("IDCoreAlbumNames", "Artist", debug=debug)
-    
-    def getArtistIDCoreAlbumIDs(self, debug=False):
-        return self.getDBData("IDCoreAlbumIDs", "Artist", debug=debug)
-    
-    def getArtistIDCoreAlbumRefs(self, debug=False):
-        return self.getDBData("IDCoreAlbumRefs", "Artist", debug=debug)
-
-    def getArtistIDAlbumIDs(self, debug=False):
-        return self.getDBData("IDAlbumIDs", "Artist", debug=debug)
-
-    def getArtistIDAlbumRefs(self, debug=False):
-        return self.getDBData("IDAlbumRefs", "Artist", debug=debug)
     
     
     ##################################  Ascii Lookup ##################################

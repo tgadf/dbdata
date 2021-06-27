@@ -103,6 +103,10 @@ class artistGenius(artistDBBase):
     ## Artist ID
     ##############################################################################################################################
     def getID(self, url):
+        if url is None:
+            aic = artistDBIDClass(ID=None, err="NoURL")
+            return aic
+            
         artistID = self.dutils.getArtistID(url, debug=False)
         if artistID is not None:
             aic = artistDBIDClass(ID=artistID)
