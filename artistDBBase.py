@@ -39,20 +39,20 @@ class artistDBTextClass:
 
 class artistDBLinkClass:
     def __init__(self, link, err=None):
-        self.link  = link
-        self.err   = None
         self.href  = None
-        self.text  = None
-        self.attrs = None
         self.title = None
+        self.text  = None
+        self.err   = None
         
         if isBS4Tag(link):
-            self.attrs = link.attrs            
-            self.href  = self.attrs.get('href')
-            self.title = self.attrs.get('title')
+            self.href  = link.attrs.get('href')
+            self.title = link.attrs.get('title')
             self.text  = link.text
         else:
             self.err = "NoLink"
+        
+    def get(self):
+        return self.__dict__
     
             
 class artistDBURLClass:

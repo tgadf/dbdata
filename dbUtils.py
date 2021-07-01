@@ -406,6 +406,8 @@ class utilsDeezer(utilsBase):
         
         
     def getArtistID(self, url, debug=False):
+        if url is None:
+            return None
         artistID = url.split("/")[-1]
         
         ## Remove everything after '?' if present
@@ -417,6 +419,7 @@ class utilsDeezer(utilsBase):
             str(int(artistID))
         except:
             print("Could not determine artistID from URL {0}".format(url))
+            return None
         
         return artistID
         
@@ -474,6 +477,8 @@ class utilsKWorbSpotify(utilsBase):
         
     def getArtistID(self, name, counts):
         m = md5()
+        if name is None or counts is None:
+            return None
         m.update(name.encode('utf-8'))
         m.update(counts.encode('utf-8'))
         hashval = m.hexdigest()
@@ -483,6 +488,8 @@ class utilsKWorbSpotify(utilsBase):
         
     def getAlbumCode(self, name, url=None):
         m = md5()
+        if name is None:
+            return None
         m.update(name.encode('utf-8'))
         if url is not None:
             m.update(url.encode('utf-8'))
@@ -634,6 +641,8 @@ class utilsAlbumOfTheYear(utilsBase):
         
     def getAlbumCode(self, name, url=None):
         m = md5()
+        if name is None:
+            return None
         m.update(name.encode('utf-8'))
         if url is not None:
             m.update(url.encode('utf-8'))

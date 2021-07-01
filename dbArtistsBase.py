@@ -195,6 +195,10 @@ class dbArtistsBase:
         files  = list(set(files1 + files2))
         return files
     
+    def getAllCreditFiles(self, dirVal):
+        files = findExt(setDir(dirVal, "credit"), ext=".p")
+        return files
+    
     
     def getRecentFiles(self, files, previousDays=None, force=False):
         newFiles = None
@@ -207,6 +211,33 @@ class dbArtistsBase:
             newFiles  = numNew #list(set(numNew).union(set(numRecent)))
             print("  ===> Found new {0} files (< {1} days) to parse".format(len(newFiles), previousDays))
         return newFiles
+
+        
+    def getArtistCreditFiles(self, modVal, previousDays=None, force=False):
+        if previousDays is None:
+            previousDays = self.previousDays
+            
+        searchDir = setDir(self.getModValDir(modVal), "credit")
+        files = findExt(searchDir, ext=".p")
+        return files
+
+        
+    def getArtistSongFiles(self, modVal, previousDays=None, force=False):
+        if previousDays is None:
+            previousDays = self.previousDays
+            
+        searchDir = setDir(self.getModValDir(modVal), "song")
+        files = findExt(searchDir, ext=".p")
+        return files
+
+        
+    def getArtistCompositionFiles(self, modVal, previousDays=None, force=False):
+        if previousDays is None:
+            previousDays = self.previousDays
+            
+        searchDir = setDir(self.getModValDir(modVal), "composition")
+        files = findExt(searchDir, ext=".p")
+        return files
     
     
     def getArtistRawFiles(self, datatype, previousDays=None, force=False):

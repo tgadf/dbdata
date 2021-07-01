@@ -131,8 +131,13 @@ class artistKWorbSpotify(artistDBBase):
             for itr,tr in enumerate(trs[1:]):
                 trackData = dict(zip(ths,tr.findAll("td")))
 
-                trackYear = trackData["Peak Date"].text[:4]
+                trackYear = None
+                if trackData.get("Peak Date") is not None:
+                    trackYear = trackData["Peak Date"].text[:4]
 
+                if trackData.get("Track") is None:
+                    continue
+                    
                 trackURL  = trackData["Track"].find("a")
                 if trackURL is not None:
                     trackURL = trackURL.attrs['href']
