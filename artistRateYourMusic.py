@@ -142,7 +142,7 @@ class artistRateYourMusic(artistDBBase):
         profileData = dict(zip(headers, content))
 
         data = {}
-        if False:
+        if True:
             if profileData.get("Formed") is not None:
                 link     = profileData["Formed"].find("a", {"class": "location"})
                 data["Formed"] = artistDBLinkClass(link)
@@ -151,6 +151,7 @@ class artistRateYourMusic(artistDBBase):
                 links   = profileData["Members"].findAll("a", {"class": "artist"})
                 data["Members"] = [artistDBLinkClass(member) for member in links]
 
+        if False:
             if profileData.get("Also Known As"):
                 tag = profileData["Also Known As"]
                 data["Also Known As"] = artistDBTagClass(tag)
