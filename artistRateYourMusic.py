@@ -141,21 +141,52 @@ class artistRateYourMusic(artistDBBase):
         content = profile.findAll("div", {"class": "info_content"})
         profileData = dict(zip(headers, content))
 
+        print("ProfileData")
+        print(profileData.keys())
+        
         data = {}
         if True:
             if profileData.get("Formed") is not None:
                 link     = profileData["Formed"].find("a", {"class": "location"})
                 data["Formed"] = artistDBLinkClass(link)
+                print("Formed:",data["Formed"])
+
+            if profileData.get("Disbanded") is not None:
+                link     = profileData["Disbanded"].find("a", {"class": "location"})
+                data["Disbanded"] = artistDBTagClass(link)
+                print("Disbanded:",data["Disbanded"])
 
             if profileData.get("Members") is not None:
                 links   = profileData["Members"].findAll("a", {"class": "artist"})
                 data["Members"] = [artistDBLinkClass(member) for member in links]
+                print("Members:",data["Members"])
 
         if False:
             if profileData.get("Also Known As"):
                 tag = profileData["Also Known As"]
                 data["Also Known As"] = artistDBTagClass(tag)
-
+                
+        if True:
+            if profileData.get("Member of"):
+                tag = profileData["Member of"]
+                data["Member of"] = artistDBTagClass(tag)
+                print("Member of:",data["Member of"])
+                
+            if profileData.get("Related Artists"):
+                tag = profileData["Related Artists"]
+                data["Related Artists"] = artistDBTagClass(tag)
+                print("Related Artists:",data["Related Artists"])
+                
+            if profileData.get("Born"):
+                tag = profileData["Born"]
+                data["Born"] = artistDBTagClass(tag)
+                print("Born:",data["Currently"])
+                
+            if profileData.get("Currently"):
+                tag = profileData["Currently"]
+                data["Currently"] = artistDBTagClass(tag)
+                print("Currently:",data["Currently"])
+                
         if True:
             if profileData.get("Genres") is not None:
                 links   = profileData["Genres"].findAll("a", {"class": "genre"})
@@ -173,8 +204,11 @@ class artistRateYourMusic(artistDBBase):
                 data["Share"] = artistDBTagClass(tag)
                
         apc = artistDBProfileClass(formed=data.get("Formed"), aliases=data.get("Also Known As"),
-                                 members=data.get("Members"), notes=data.get("Notes"),
-                                 genres=data.get("Genres"), share=data.get("Share"))
+                                   members=data.get("Members"), notes=data.get("Notes"),
+                                   memberof=data.get("Member of"), relatedartists=data.get("Related Artists"),
+                                   disbanded=data.get("Disbanded"),
+                                   born=data.get("Born"), currently=data.get("Currently"),
+                                   genres=data.get("Genres"), share=data.get("Share"))
         return apc
 
     

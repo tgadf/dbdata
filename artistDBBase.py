@@ -151,21 +151,27 @@ class artistDBPageClass:
 
 class artistDBProfileClass:
     def __init__(self, profile=None, aliases=None, members=None, sites=None, groups=None, 
-                 formed=None, related=None, notes=None, share=None,
+                 formed=None, disbanded=None, related=None, notes=None, share=None, 
+                 memberof=None, relatedartists=None, born=None, currently=None,
                  genres=None, search=None, external=None, variations=None, err=None):
-        self.profile    = profile
-        self.aliases    = aliases
-        self.members    = members
-        self.sites      = sites
-        self.formed     = formed
-        self.related    = related
-        self.notes      = notes
-        self.share      = share
-        self.genres     = genres
-        self.search     = search
-        self.external   = external
-        self.variations = variations
-        self.err        = err
+        self.profile         = profile
+        self.aliases         = aliases
+        self.members         = members
+        self.sites           = sites
+        self.formed          = formed
+        self.related         = related
+        self.notes           = notes
+        self.share           = share
+        self.born            = born
+        self.disbanded       = disbanded
+        self.currently       = currently
+        self.memberof        = memberof
+        self.relatedartists  = relatedartists
+        self.genres          = genres
+        self.search          = search
+        self.external        = external
+        self.variations      = variations
+        self.err             = err
         
     def get(self):
         return self.__dict__
