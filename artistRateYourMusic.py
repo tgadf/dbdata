@@ -2,7 +2,7 @@ from artistDBBase import artistDBBase, artistDBDataClass
 from artistDBBase import artistDBNameClass, artistDBMetaClass, artistDBIDClass, artistDBURLClass, artistDBURLInfo, artistDBPageClass
 from artistDBBase import artistDBProfileClass, artistDBMediaClass, artistDBMediaAlbumClass
 from artistDBBase import artistDBMediaDataClass, artistDBMediaCountsClass
-from artistDBBase import artistDBLinkClass, artistDBTagClass
+from artistDBBase import artistDBLinkClass, artistDBTagClass, artistDBTextClass
 from strUtils import fixName
 from dbUtils import utilsRateYourMusic
 from webUtils import removeTag
@@ -134,6 +134,34 @@ class artistRateYourMusic(artistDBBase):
     ##############################################################################################################################
     ## Artist Variations
     ##############################################################################################################################
+    def getAlsoKnownAs(self, tag):
+        if tag is None:
+            return None
+#        {'tag': <div class="info_content"><span class="rendered_text">Dwight David Turner [birth name], <a class="artist" href="/artist/dwight_david" title="[Artist864564]">Dwight David</a>, Spider Turner</span></div>}        
+        span = tag.getTag().find("span", {"class": "rendered_text"})
+        retval = []
+        if span is not None:
+            refs = span.findAll("a")
+            for ref in refs:
+                result = artistDBLinkClass(ref)
+                retval.append(result)
+                span = removeTag(span, ref)
+                
+            for result in span.text.split(","):
+                retval.append(artistDBTextClass(result.strip()))
+        else:
+            refs = tag.getTag().findAll("a")
+            if len(refs) == 0:
+                try:
+                    retval.append(artistDBTextClass(tag.getTag().strip()))
+                except:
+                    pass
+            else:
+                for ref in refs:
+                    result = artistDBLinkClass(ref)
+                    retval.append(result)
+        return retval
+    
     def getProfile(self):
         profile = self.bsdata.find("div", {"class": "artist_info"})
         headers = profile.findAll("div", {"class": "info_hdr"})
@@ -141,74 +169,74 @@ class artistRateYourMusic(artistDBBase):
         content = profile.findAll("div", {"class": "info_content"})
         profileData = dict(zip(headers, content))
 
-        print("ProfileData")
-        print(profileData.keys())
-        
         data = {}
         if True:
             if profileData.get("Formed") is not None:
                 link     = profileData["Formed"].find("a", {"class": "location"})
                 data["Formed"] = artistDBLinkClass(link)
-                print("Formed:",data["Formed"])
+                #print("Formed:",data["Formed"])
 
             if profileData.get("Disbanded") is not None:
                 link     = profileData["Disbanded"].find("a", {"class": "location"})
-                data["Disbanded"] = artistDBTagClass(link)
-                print("Disbanded:",data["Disbanded"])
+                data["Disbanded"] = artistDBLinkClass(link)
+                #print("Disbanded:",data["Disbanded"])
 
             if profileData.get("Members") is not None:
                 links   = profileData["Members"].findAll("a", {"class": "artist"})
                 data["Members"] = [artistDBLinkClass(member) for member in links]
-                print("Members:",data["Members"])
+                #print("Members:",data["Members"])
 
-        if False:
             if profileData.get("Also Known As"):
                 tag = profileData["Also Known As"]
-                data["Also Known As"] = artistDBTagClass(tag)
+                data["Also Known As"] = [artistDBLinkClass(ref) for ref in tag.findAll("a")]
+                #data["Also Known As"] = self.getAlsoKnownAs(artistDBTagClass(tag))
+                #print("Also Known As:",data["Also Known As"])
                 
-        if True:
             if profileData.get("Member of"):
                 tag = profileData["Member of"]
-                data["Member of"] = artistDBTagClass(tag)
-                print("Member of:",data["Member of"])
+                data["Member of"] = [artistDBLinkClass(ref) for ref in tag.findAll("a")]
+                #print("Member of:",data["Member of"])
                 
             if profileData.get("Related Artists"):
-                tag = profileData["Related Artists"]
-                data["Related Artists"] = artistDBTagClass(tag)
-                print("Related Artists:",data["Related Artists"])
+                links   = profileData["Related Artists"].findAll("a", {"class": "artist"})
+                data["Related Artists"] = [artistDBLinkClass(member) for member in links]
+                #print("Related Artists:",data["Related Artists"])
                 
             if profileData.get("Born"):
                 tag = profileData["Born"]
-                data["Born"] = artistDBTagClass(tag)
-                print("Born:",data["Currently"])
+                if tag.find("a") is not None:
+                    data["Born"] = artistDBLinkClass(tag.find("a"))
+                else:
+                    data["Born"] = None
+                    #data["Born"] = artistDBTagClass(tag)
+                #print("Born:",data["Born"])
                 
             if profileData.get("Currently"):
                 tag = profileData["Currently"]
-                data["Currently"] = artistDBTagClass(tag)
-                print("Currently:",data["Currently"])
+                if tag.find("a") is not None:
+                    data["Currently"] = artistDBLinkClass(tag.find("a"))
+                else:
+                    data["Currently"] = None
+                    #data["Currently"] = artistDBTagClass(tag)
+                #print("Currently:",data["Currently"])
                 
-        if True:
             if profileData.get("Genres") is not None:
                 links   = profileData["Genres"].findAll("a", {"class": "genre"})
                 data["Genres"]  = [artistDBLinkClass(genre) for genre in links]
                 #for item in data["Genres"]:
                 #    print(item.get())
 
-        if False:
             if profileData.get("Notes"):
                 tag   = profileData["Notes"]
-                data["Notes"] = artistDBTagClass(tag)
+                data["Notes"] = [artistDBLinkClass(ref) for ref in tag.findAll("a")]
 
-            if profileData.get("Share"):
-                tag   = profileData["Share"]
-                data["Share"] = artistDBTagClass(tag)
                
         apc = artistDBProfileClass(formed=data.get("Formed"), aliases=data.get("Also Known As"),
                                    members=data.get("Members"), notes=data.get("Notes"),
                                    memberof=data.get("Member of"), relatedartists=data.get("Related Artists"),
                                    disbanded=data.get("Disbanded"),
                                    born=data.get("Born"), currently=data.get("Currently"),
-                                   genres=data.get("Genres"), share=data.get("Share"))
+                                   genres=data.get("Genres"))
         return apc
 
     

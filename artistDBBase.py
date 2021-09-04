@@ -3,35 +3,13 @@ from fsUtils import isFile
 from webUtils import getHTML, isBS4, isBS4Tag
 from math import ceil, floor
 from dbBase import dbBase
+from copy import copy, deepcopy
 
 
 class artistDBIDClass:
     def __init__(self, ID=None, err=None):
         self.ID=ID
         self.err=err
-        
-    def get(self):
-        return self.__dict__
-    
-
-class artistDBTagClass:
-    def __init__(self, tag, err=None):
-        self.tag = tag
-        if not isBS4Tag(tag):
-            self.err = "NoTag"
-        
-    def get(self):
-        return self.__dict__
-    
-
-class artistDBTextClass:
-    def __init__(self, tag, err=None):
-        self.text  = None
-        self.err   = None
-        if isBS4Tag(tag):
-            self.text  = tag.text
-        else:
-            self.err = "NoTag"
         
     def get(self):
         return self.__dict__
@@ -50,6 +28,32 @@ class artistDBLinkClass:
             self.text  = link.text
         else:
             self.err = "NoLink"
+        
+    def get(self):
+        return self.__dict__
+    
+
+class artistDBTagClass:
+    def __init__(self, tag, err=None):
+        self.bstag = None
+        self.err   = None
+        
+        if isBS4Tag(tag):
+            self.bstag = deepcopy(tag)
+        else:
+            self.err = "NoTag"
+            
+    def getTag(self):
+        return self.bstag
+        
+    def get(self):
+        return self.__dict__
+    
+
+class artistDBTextClass:
+    def __init__(self, text, err=None):
+        self.text  = text
+        self.err   = None
         
     def get(self):
         return self.__dict__
@@ -151,7 +155,7 @@ class artistDBPageClass:
 
 class artistDBProfileClass:
     def __init__(self, profile=None, aliases=None, members=None, sites=None, groups=None, 
-                 formed=None, disbanded=None, related=None, notes=None, share=None, 
+                 formed=None, disbanded=None, related=None, notes=None,
                  memberof=None, relatedartists=None, born=None, currently=None,
                  genres=None, search=None, external=None, variations=None, err=None):
         self.profile         = profile
@@ -161,7 +165,6 @@ class artistDBProfileClass:
         self.formed          = formed
         self.related         = related
         self.notes           = notes
-        self.share           = share
         self.born            = born
         self.disbanded       = disbanded
         self.currently       = currently
