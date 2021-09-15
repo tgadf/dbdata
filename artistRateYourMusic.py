@@ -267,6 +267,62 @@ class artistRateYourMusic(artistDBBase):
         return amac
     
     
+    def getClassicalMedia(self, artist, url):
+        artistWorks = self.bsdata.find("div", {"class": "section_artist_works"})
+        
+        media = {}
+        
+        uls = artistWorks.findAll("ul")
+        mediaType   = None
+        for i,ul in enumerate(uls):
+            print(ul.attrs)
+            for j,li in enumerate(ul.findAll("li")):
+                print(li.attrs)
+                if 'work_header' in li.attrs.get('class', []):
+                    mediaType = li.text
+                    continue
+
+                ## Code
+                codedata = li.find("span", {"class": "work_numbers"})
+                code = None
+                if codedata is not None:
+                    code = codedata.text
+
+                    
+                ## Title
+                mainline = li.find("span", {"class": "work_title"})
+                maindata = self.getNamesAndURLs(mainline)
+                try:
+                    album = maindata[0].name
+                except:
+                    album = None
+
+                try:
+                    albumurl = maindata[0].url
+                except:
+                    albumurl = None
+
+
+                ## Year
+                yeardata = li.find("span", {"class": "work_date"})
+                year = None
+                if yeardata is not None:
+                    year = yeardata.text
+
+                    
+                ## Artists        
+                albumartists = [artistDBURLInfo(name=artist.name, url=url.url.replace("https://rateyourmusic.com", ""), ID=None)]
+                
+                print(mediaType,'\t',code,'\t',album,'\t',year)
+                
+                amdc = artistDBMediaDataClass(album=album, url=album, aclass=None, aformat=None, artist=albumartists, code=code, year=year)
+                if media.get(mediaType) is None:
+                    media[mediaType] = []
+                media[mediaType].append(amdc)
+                
+        return media
+    
+                
     def getMedia(self, artist, url):
         amc  = artistDBMediaClass()
 
@@ -332,7 +388,10 @@ class artistRateYourMusic(artistDBBase):
                     #    print("Found Album: [{0}/{1}] : {2}  /  {3}".format(len(amc.media[mediaType]), mediaType, code, album, album))
 
         
-        
+        classicalMedia = self.getClassicalMedia(artist, url)
+        print(classicalMedia)
+        if len(classicalMedia) > 0:
+            amc.media.update(classicalMedia)
 
         return amc
     
