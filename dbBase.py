@@ -218,7 +218,9 @@ class dbBase():
 
 
     ###############################################################################
-    # Discog Albums Directories
+    ##
+    ## Discog Albums Directories
+    ##
     ###############################################################################
     def getAlbumsDir(self, debug=False):
         key = "albums-{0}".format(self.base)
@@ -253,10 +255,6 @@ class dbBase():
         dbfiles = findExt(self.getAlbumsMetadataDBDir(), "*-ArtistMetadata.p")
         return dbfiles
     
-    def getAlbumsArtistsFiles(self, debug=False):
-        dbfiles = findExt(self.getAlbumsMetadataDBDir(), "*-ArtistAlbums.p")
-        return dbfiles
-    
     def getAlbumsDBModValFilename(self, modVal):
         dbfile = setFile(self.getAlbumsDBDir(), "{0}-DB.p".format(modVal))
         return dbfile
@@ -270,7 +268,9 @@ class dbBase():
 
 
     ###############################################################################
-    # Discog Special/Search Directories
+    ##
+    ## Discog Special/Search Directories
+    ##
     ###############################################################################
     def getSearchDir(self, debug=False):
         return self.dirnames["search"]
@@ -326,96 +326,33 @@ class dbBase():
     # Master Discogs DB
     #
     ###############################################################################
-
-    ###############################################################################
-    ### Master ?
-    ###############################################################################    
-    def getMasterDiscogsDB(self, debug=False):
-        return self.getDBData("DB", "Master")
-    
-    def getMasterDiscogsDBFilename(self, debug=False):
-        savename = self.getDBData("DB", "Master", returnName=True)
-        return savename
     
     ###############################################################################
     ### Master Artist
     ###############################################################################
-    def getMasterArtistDiscogsDB(self, debug=False):
-        return self.getDBData("DB", "MasterArtist")
-
-    def getMasterArtistDiscogsDBFilename(self, debug=False):
+    def getMasterDBArtistFilename(self, debug=False):
         savename = self.getDBData("DB", "MasterArtist", returnName=True)
         return savename
-    
-    ###############################################################################
-    ### Master Slim Artist
-    ###############################################################################
-    def getMasterSlimArtistDiscogsDB(self, debug=False):
-        return self.getDBData("DB", "MasterSlimArtist")
-    
-    def getMasterSlimArtistDiscogsDBFilename(self, debug=False):
-        savename = self.getDBData("DB", "MasterSlimArtist", returnName=True)
-        return savename
-    
-    ###############################################################################
-    ### Master Known Slim Artist
-    ###############################################################################
-    def getMasterKnownSlimArtistDiscogsDB(self, debug=False):
-        return self.getDBData("DB", "MasterKnownSlimArtist")
-    
-    def getMasterKnownSlimArtistDiscogsDBFilename(self, debug=False):
-        savename = self.getDBData("DB", "MasterKnownSlimArtist", returnName=True)
-        return savename
+        
+    def getMasterDBArtistDataFrame(self, debug=False):
+        return self.getDBData("DB", "MasterArtist")
 
+    def getMasterDBArtistIDToNameData(self, debug=False):
+        return self.getDBData("", "MasterArtistIDToName")
+
+    def getMasterDBArtistNameToIDData(self, debug=False):
+        return self.getDBData("", "MasterArtistNameToID")
+
+    
     ###############################################################################
     ### Master Artist Albums
-    ###############################################################################    
-    def getMasterArtistAlbumsDiscogsDB(self, debug=False):
-        return self.getDBData("DB", "MasterArtistAlbums")
-    
-    def getMasterArtistAlbumsDiscogsDBFilename(self, debug=False):
+    ############################################################################### 
+    def getMasterDBArtistAlbumsFilename(self, debug=False):
         savename = self.getDBData("DB", "MasterArtistAlbums", returnName=True)
         return savename
-
-    ###############################################################################
-    ### Master Slim Artist Albums
-    ###############################################################################    
-    def getMasterSlimArtistAlbumsDiscogsDB(self, debug=False):
-        return self.getDBData("DB", "MasterSlimArtistAlbums")
-    
-    def getMasterSlimArtistAlbumsDiscogsDBFilename(self, debug=False):
-        savename = self.getDBData("DB", "MasterSlimArtistAlbums", returnName=True)
-        return savename
-
-    ###############################################################################
-    ### Master Known Artist Albums
-    ###############################################################################    
-    def getMasterKnownArtistAlbumsDiscogsDB(self, debug=False):
-        return self.getDBData("DB", "MasterKnownArtistAlbums")
-    
-    def getMasterKnownArtistAlbumsDiscogsDBFilename(self, debug=False):
-        savename = self.getDBData("DB", "MasterKnownArtistAlbums", returnName=True)
-        return savename
-    
-    ###############################################################################
-    ### Master Artist Metadata
-    ###############################################################################    
-    def getMasterArtistMetadataDiscogsDB(self, debug=False):
-        return self.getDBData("DB", "MasterArtistMetadata")
-    
-    def getMasterArtistMetadataDiscogsDBFilename(self, debug=False):
-        savename = self.getDBData("DB", "MasterArtistMetadata", returnName=True)
-        return savename
-    
-    ###############################################################################
-    ### Master Albums
-    ###############################################################################    
-    def getMasterAlbumDiscogsDB(self, debug=False):
-        return self.getDBData("DB", "MasterAlbum")
-    
-    def getMasterAlbumDiscogsDBFilename(self, debug=False):
-        savename = self.getDBData("DB", "MasterAlbum", returnName=True)
-        return savename
+        
+    def getMasterDBArtistAlbumsDataFrame(self, debug=False):
+        return self.getDBData("DB", "MasterArtistAlbums")
     
         
     ###############################################################################
@@ -451,7 +388,11 @@ class dbBase():
         return self.getDBData("IDToCollaborations", "Artist", debug=debug)
     
     
-    ##################################  Albums ##################################
+    ###############################################################################
+    #
+    # Album Lookups
+    #
+    ###############################################################################
     def getAlbumIDToNameData(self, debug=False):
         return self.getDBData("IDToName", "Album")
     
@@ -460,7 +401,6 @@ class dbBase():
     
     def getAlbumIDToArtistsData(self, debug=False):
         return self.getDBData("IDToArtists", "Album")
-    
     
     def getAlbumNameToIDData(self, debug=False):
         return self.getDBData("NameToID", "Album")

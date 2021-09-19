@@ -76,7 +76,7 @@ class utilsBase:
     
 
     def downloadArtistURL(self, url, savename, force=False, sleeptime=2, debug=False):
-        print("URL/Savename: {0}/{1}".format(url, savename))
+        print("URL/Savename: [{0}] :: [{1}]".format(url, savename))
         if isFile(savename):
             if self.debug or debug:
                 print("{0} exists.".format(savename))
