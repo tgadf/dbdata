@@ -269,13 +269,14 @@ class artistRateYourMusic(artistDBBase):
     
     def getClassicalMedia(self, artist, url):
         artistWorks = self.bsdata.find("div", {"class": "section_artist_works"})
+        if artistWorks is None:
+            return {}
         
         media = {}
         
         uls = artistWorks.findAll("ul")
         mediaType   = None
         for i,ul in enumerate(uls):
-            print(ul.attrs)
             for j,li in enumerate(ul.findAll("li")):
                 print(li.attrs)
                 if 'work_header' in li.attrs.get('class', []):
@@ -313,7 +314,7 @@ class artistRateYourMusic(artistDBBase):
                 ## Artists        
                 albumartists = [artistDBURLInfo(name=artist.name, url=url.url.replace("https://rateyourmusic.com", ""), ID=None)]
                 
-                print(mediaType,'\t',code,'\t',album,'\t',year)
+                #print(mediaType,'\t',code,'\t',album,'\t',year)
                 
                 amdc = artistDBMediaDataClass(album=album, url=album, aclass=None, aformat=None, artist=albumartists, code=code, year=year)
                 if media.get(mediaType) is None:
@@ -389,7 +390,6 @@ class artistRateYourMusic(artistDBBase):
 
         
         classicalMedia = self.getClassicalMedia(artist, url)
-        print(classicalMedia)
         if len(classicalMedia) > 0:
             amc.media.update(classicalMedia)
 
