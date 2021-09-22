@@ -2,12 +2,11 @@ from dbArtistsBase import dbArtistsBase
 from fileUtils import getBaseFilename
 from fsUtils import isFile
 from ioUtils import getFile, saveFile
+from timeUtils import timestat
 
 
 #################################################################################################################################
-#
 # Primary
-#
 #################################################################################################################################
 class dbArtistsPrimary(dbArtistsBase):
     def __init__(self, dbArtists):        
@@ -15,19 +14,28 @@ class dbArtistsPrimary(dbArtistsBase):
         self.setPrimary()
         self.dbArtists = dbArtists
         
+    def parse(self, modVal, expr, force=False, debug=False):
+        ts = timestat("Parsing ModVal={0} Primary Files".format(modVal))  
         
-    def parse(self, modVal, previousDays=None, force=False, debug=False):
-        newFiles = self.getArtistFiles(modVal=modVal, previousDays=previousDays, force=force)
-        print("Processing {0} new files for ModVal={1} for {2}".format(len(newFiles), modVal,type(self.dbArtists)))
-        dbdata   = self.getDBData(modVal, force)
+        tsFiles  = timestat("Finding Files To Parse")
+        newFiles = self.getArtistPrimaryFiles(modVal, expr, force)
+        tsFiles.stop()
 
+        N = len(newFiles)
+        if N > 0:
+            tsDB = timestat("Loading ModVal={0} DB Data".format(modVal))
+            dbdata   = self.getDBData(modVal, force)
+            tsDB.stop()
+            
         newData  = 0
-        for j,ifile in enumerate(newFiles):
+        for i,ifile in enumerate(newFiles):
             if force is True:
-                if j % 100 == 0:
-                    print("\tProcessed {0}/{1} files.".format(j,len(newFiles)))
+                if i % 100 == 0:
+                    print("\tProcessed {0}/{1} files.".format(i,N))
+            if debug:
+                print("{0}/{1}\tParsing {2}".format(i,N,ifile))
+                
             artistID = getBaseFilename(ifile)
-            isKnown  = dbdata.get(artistID)
             info     = self.artist.getData(ifile)
             if debug:
                 print("\t",ifile,' ==> ',info.ID.ID,' <-> ',artistID)
@@ -39,11 +47,50 @@ class dbArtistsPrimary(dbArtistsBase):
             dbdata[artistID] = info
             newData += 1
             
-        #print("Done with loop: {0}".format(newData))
         if newData > 0:
             self.saveDBData(modVal, dbdata, newData)
-            
+        
+        ts.stop()
+        
         return newData > 0
+
+
+#################################################################################################################################
+# Parse From Raw HTML
+#################################################################################################################################
+class dbArtistsRawHTML(dbArtistsBase):
+    def __init__(self, dbArtists):        
+        super().__init__(dbArtists)
+        self.setPrimary()
+        self.dbArtists = dbArtists
+            
+    def parse(self, expr, force=False, debug=False):
+        ts = timestat("Parsing Raw HTML Files")
+        
+        tsFiles  = timestat("Finding Files To Parse")
+        newFiles = self.getArtistRawHTMLFiles(expr, force)
+        tsFiles.stop()
+        if debug:
+            print("Parsing {0} Raw HTML Files From Expr[{1}]".format(len(newFiles), expr))
+
+        N = len(newFiles)
+        tsParse = timestat("Parsing {0} Raw HTML Files".format(N))
+        for i,ifile in enumerate(newFiles):
+            if (i+1) % 25 == 0 or (i+1) == N:
+                print("\tProcessed {0}/{1} files.".format(i+1,N))
+            
+            if debug:
+                print("{0}/{1}\tParsing {2}".format(i,N,ifile))
+            htmldata = getFile(ifile)
+            retval   = self.artist.getData(ifile)
+            artistID = retval.ID.ID
+            if debug:
+                print("  ---> ID={0}".format(artistID))
+            savename = self.dutils.getArtistSavename(artistID)
+            saveFile(idata=htmldata, ifile=savename, debug=False)        
+        
+        tsParse.stop()
+        ts.stop()
             
  
         
@@ -162,9 +209,15 @@ class dbArtistsExtra(dbArtistsBase):
     def __init__(self, dbArtists):        
         super().__init__(dbArtists)
         self.setExtra()
+                
+    def parse(self, modVal, expr, force=False, debug=False):
+        ts = timestat("Parsing ModVal={0} Extra Files".format(modVal))
+        1/0
         
-        
-    def parse(self, modVal, previousDays=None, force=False):
+        newFiles = self.getArtistPrimaryFiles(expr, force)
+        if debug:
+            print("Parsing {0} Extra ModVal={1} Files From Expr[{2}]".format(len(newFiles), expr))
+            
         newFiles = self.getArtistFiles(modVal, force=True)
         dbdata   = self.getDBData(modVal, force=False)
     
@@ -213,32 +266,6 @@ class dbArtistsExtra(dbArtistsBase):
             self.saveDBData(modVal, dbdata, newData)
             
         return newData > 0
-
-
-#################################################################################################################################
-#
-# Parse From Raw HTML
-#
-#################################################################################################################################
-class dbArtistsRawHTML(dbArtistsBase):
-    def __init__(self, dbArtists):        
-        super().__init__(dbArtists)
-        self.setPrimary()
-        self.dbArtists = dbArtists
-            
-    def parse(self, previousDays=None, force=False):
-        newFiles = self.getArtistRawHTMLFiles(previousDays, force)
-
-        for ifile in newFiles:
-            print("Parsing {0}".format(ifile))
-            htmldata = getFile(ifile)
-            retval   = self.artist.getData(ifile)
-            artistID = retval.ID.ID
-            print("  ID={0}".format(artistID))
-            savename = self.dutils.getArtistSavename(artistID)
-            saveFile(idata=htmldata, ifile=savename, debug=False)        
-        
-        #self.dbArtists.parseDownloadedFiles(previousDays=None, force=False)
 
 
 #################################################################################################################################

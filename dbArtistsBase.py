@@ -5,6 +5,10 @@ from searchUtils import findExt
 from datetime import datetime, timedelta
 from time import sleep, mktime, gmtime
 from os import path
+from pandas import Series
+
+from searchUtils import filesFromDir
+from recentFilesUtils import recentFiles
 
 class dbArtistsBase:
     def __init__(self, dbArtists, basedir=None, debug=False):
@@ -99,6 +103,8 @@ class dbArtistsBase:
             print("Saving {0} total artist IDs to {1}".format(len(dbdata), dbname))
         dbNumAlbums = sum([self.getArtistNumAlbums(artistData) for artistData in dbdata.values()])
         print("Saving {0} total artist media".format(dbNumAlbums))
+        if isinstance(dbdata, dict):
+            dbdata = Series(dbdata)
         saveFile(idata=dbdata, ifile=dbname)
         
         
@@ -117,6 +123,8 @@ class dbArtistsBase:
         if localForce is False:
             print("Loading {0}".format(dbname))
             dbdata = getFile(dbname, version=3)
+            if isinstance(dbdata,Series):
+                dbdata = dbdata.to_dict()
             print("  ===> Found {0} previous data for ModVal={1}".format(len(dbdata), modVal))
         else:
             print("  ===> Forcing Reloads of ModVal={0}".format(modVal))
@@ -127,7 +135,7 @@ class dbArtistsBase:
         
         
     ##################################################################################################################
-    # Files For Parsing
+    # File I/O And Directories For Parsing
     ##################################################################################################################
     def getModValDir(self, modVal):
         artistDir = self.disc.getArtistsDir()
@@ -146,129 +154,82 @@ class dbArtistsBase:
             dirVal = setDir(dirVal, "unofficial")
         return dirVal
     
-    
-    def getAllFiles(self, dirVal):
-        files  = findExt(dirVal, ext='.p')
-        return files
-    
-
-    def getArtistFiles(self, modVal, previousDays=None, previousHours=None, force=False):
-        if previousDays is None:
-            previousDays = self.previousDays
-        if previousHours is None:
-            previousHours = self.previousHours
-            
-        dirVal = self.getModValDir(modVal)
-        files  = self.getAllFiles(dirVal)
-        dbname = self.disc.getArtistsDBModValFilename(modVal)
-        
-        now    = datetime.now()
-        if isFile(dbname):
-            lastModified = datetime.fromtimestamp(path.getmtime(dbname))
-            if force is True:
-                lastModified = None
-        else:
-            lastModified = None
-            
-        newFiles = None
-        if lastModified is None:
-            newFiles = files
-            print("  ===> Parsing all {0} files for modval {1}".format(len(newFiles), modVal))
-        else:
-            numNew = []
-            if previousDays is not None:
-                numNew    = [ifile for ifile in files if (now-datetime.fromtimestamp(path.getmtime(ifile))).days < previousDays]
-            numRecent = [ifile for ifile in files if datetime.fromtimestamp(path.getmtime(ifile)) > lastModified]
-            newFiles  = list(set(numNew).union(set(numRecent)))
-            print("  ===> Found [New={0}] / [Rec={1}] / [Tot={2}] files.".format(len(numNew), len(numRecent), len(newFiles)))
-            print("  ===> Found new {0} files (< {1} days) to parse for modval {2}".format(len(newFiles), previousDays, modVal))
-        return newFiles
-    
-    
-    def getAllRawSpotifyFiles(self, dirVal):
-        files = findExt(setDir(dirVal, "spotify"), ext=".p")
-        return files
-    
-    def getAllRawHTMLFiles(self, dirVal):
-        files1 = findExt(setDir(dirVal, "data"), ext=".html")
-        files2 = findExt(setDir(dirVal, "data"), ext=".htm")
-        files  = list(set(files1 + files2))
-        return files
-    
-    def getAllCreditFiles(self, dirVal):
-        files = findExt(setDir(dirVal, "credit"), ext=".p")
-        return files
-    
-    
-    def getRecentFiles(self, files, previousDays=None, force=False):
-        newFiles = None
+    def getFilesByRecency(self, files, expr, force=False):
         if force is True:
             newFiles = files
-            print("  ===> Parsing all {0} files for modval {1}".format(len(newFiles), modVal))
         else:
-            now       = datetime.now()
-            numNew    = [ifile for ifile in files if (now-datetime.fromtimestamp(path.getmtime(ifile))).days < previousDays]
-            newFiles  = numNew #list(set(numNew).union(set(numRecent)))
-            print("  ===> Found new {0} files (< {1} days) to parse".format(len(newFiles), previousDays))
+            rf = recentFiles()
+            rf.setFiles(files)
+            newFiles = rf.getFilesByRecency(expr)
         return newFiles
-
-        
-    def getArtistCreditFiles(self, modVal, previousDays=None, force=False):
-        if previousDays is None:
-            previousDays = self.previousDays
-            
-        searchDir = setDir(self.getModValDir(modVal), "credit")
-        files = findExt(searchDir, ext=".p")
-        return files
-
-        
-    def getArtistSongFiles(self, modVal, previousDays=None, force=False):
-        if previousDays is None:
-            previousDays = self.previousDays
-            
-        searchDir = setDir(self.getModValDir(modVal), "song")
-        files = findExt(searchDir, ext=".p")
-        return files
-
-        
-    def getArtistCompositionFiles(self, modVal, previousDays=None, force=False):
-        if previousDays is None:
-            previousDays = self.previousDays
-            
-        searchDir = setDir(self.getModValDir(modVal), "composition")
-        files = findExt(searchDir, ext=".p")
-        return files
     
-    
-    def getArtistRawFiles(self, datatype, previousDays=None, force=False):
-        if previousDays is None:
-            previousDays = self.previousDays
-    
-        searchDir = setDir(self.disc.getArtistsDir(), datatype)
-        files = findExt(searchDir, ext=".p")
-        return self.getRecentFiles(files, previousDays, force)
-
-        
-    def getArtistRawHTMLFiles(self, previousDays=None, force=False):
-        if previousDays is None:
-            previousDays = self.previousDays
-            
-        files  = self.getAllRawHTMLFiles(self.disc.getArtistsDir())
-        
-        now    = datetime.now()
-        #lastModified = None
-
-        newFiles = None
+    def getFilesByLastMod(self, files, expr, ifile, force=False):
         if force is True:
             newFiles = files
-            print("  ===> Parsing all {0} files for modval {1}".format(len(newFiles), modVal))
         else:
-            numNew    = [ifile for ifile in files if (now-datetime.fromtimestamp(path.getmtime(ifile))).days < previousDays]
-            #numRecent = [ifile for ifile in files if datetime.fromtimestamp(path.getmtime(ifile)) > lastModified]
-            newFiles  = numNew #list(set(numNew).union(set(numRecent)))
-            print("  ===> Found new {0} files (< {1} days) to parse".format(len(newFiles), previousDays))
+            rf = recentFiles()
+            rf.setFiles(files)
+            newFiles = rf.getFilesByModTime(expr, ifile)
+        return newFiles
+
+    
+    
+    ##################################################################################################################
+    # Raw and Downloaded Files
+    ##################################################################################################################
+    
+    ##########################################
+    ## Primary
+    ##########################################
+    def getArtistPrimaryFiles(self, modVal, expr, force=False):
+        ffd   = filesFromDir(ext=".p")
+        files = ffd.getFiles(self.getModValDir(modVal))
+        #print("Found {0} Total Files".format(len(files)))
+        fname = self.disc.getArtistsDBModValFilename(modVal)
+        #print("Name: {0}".format(fname))
+        newFiles = self.getFilesByLastMod(files, expr, fname)
+        #print("Found {0} New Files".format(len(newFiles)))
         return newFiles
         
+        
+    ##########################################
+    ## Extras
+    ##########################################    
+    def getArtistRawFiles(self, datatype, expr, force=False):
+        ffd   = filesFromDir(ext=".p")
+        files = ffd.getFiles(setDir(self.disc.getArtistsDir(), datatype))
+        newFiles = self.getFilesByRecency(files, expr)
+        return newFiles
+        
+    def getAllRawSpotifyFiles(self, dirVal, expr, force=False):
+        ffd   = filesFromDir(ext=".p")
+        files = ffd.getFiles(setDir(dirVal, "spotify"))
+        newFiles = self.getFilesByRecency(files, expr)
+        return newFiles
+        
+    def getArtistCreditFiles(self, modVal, expr, force=False):
+        ffd   = filesFromDir(ext=".p")
+        files = ffd.getFiles(setDir(self.getModValDir(modVal), "credit"))
+        newFiles = self.getFilesByRecency(files, expr)
+        return newFiles
+        
+    def getArtistSongFiles(self, modVal, expr, force=False):
+        ffd   = filesFromDir(ext=".p")
+        files = ffd.getFiles(setDir(self.getModValDir(modVal), "song"))
+        newFiles = self.getFilesByRecency(files, expr)
+        return newFiles
+        
+    def getArtistCompositionFiles(self, modVal, expr, force=False):
+        ffd   = filesFromDir(ext=".p")
+        files = ffd.getFiles(setDir(self.getModValDir(modVal), "composition"))
+        newFiles = self.getFilesByRecency(files, expr)
+        return newFiles
+        
+    def getArtistRawHTMLFiles(self, expr, force=False):
+        ffd   = filesFromDir(ext=[".html", ".htm"])
+        files = ffd.getFiles(setDir(self.disc.getArtistsDir(), "data"))
+        newFiles = self.getFilesByRecency(files, expr)
+        return newFiles
 
 
     

@@ -278,7 +278,6 @@ class artistRateYourMusic(artistDBBase):
         mediaType   = None
         for i,ul in enumerate(uls):
             for j,li in enumerate(ul.findAll("li")):
-                print(li.attrs)
                 if 'work_header' in li.attrs.get('class', []):
                     mediaType = li.text
                     continue
