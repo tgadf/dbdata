@@ -11,7 +11,7 @@ setup(
   py_modules = [
       'artistDBBase', 'dbArtistsBase', 'dbBase', 'dbUtils',
       'dbArtistsParse',
-      'dbArtistsParseExtra',
+      'dbArtistsParseExtra', 'dbArtistsParseCredit',
       'artistAllMusic', 'dbArtistsAllMusic', 
       'artistDiscogs', 'dbArtistsDiscogs', 
       'artistMusicBrainz', 'dbArtistsMusicBrainz', 
