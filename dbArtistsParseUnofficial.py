@@ -8,21 +8,22 @@ import urllib
 from webUtils import getHTML
 
 #################################################################################################################################
-# Assert Extra  (All DBs)
+# Assert Unofficial (Find Unofficial For Discogs)
 #################################################################################################################################
-class dbArtistsAssertExtra(dbArtistsBase):
+class dbArtistsAssertUnofficial(dbArtistsBase):
     def __init__(self, dbArtists):        
         super().__init__(dbArtists)
         self.setPrimary()
         self.dbArtists = dbArtists
-        print("dbArtistsAssertExtra({0})".format(self.db))
+        self.dbUnofficial = dbArtistsUnofficial(dbArtists)
+        self.metadata = {}
+        print("dbArtistsAssertUnofficial({0})".format(self.db))
         try:
             self.masterIgnoreData = self.getMasterIgnoreData()
-            self.extraIgnores = self.masterIgnoreData[self.db]["Name"]
-            print("  --> Found {0} AllMusic Song IDs To Ignore".format(len(self.extraIgnores)))
+            self.unofficialIgnores = self.masterIgnoreData[self.db]["Name"]
+            print("  --> Found {0} {1} Artist IDs To Ignore".format(len(self.unofficialIgnores), self.db))
         except:
-            self.extraIgnores = []
-            #raise ValueError("Could not load AllMusic Credit Ignores data!")
+            self.unofficialIgnores = []
 
         self.metadata = {}
                 
@@ -30,71 +31,78 @@ class dbArtistsAssertExtra(dbArtistsBase):
     def getMetadata(self):
         return self.metadata
     
-    def createExtraMetadata(self, modVal=None):
+    def createUnofficialMetadata(self, modVal=None):
         modVals = [modVal] if modVal is not None else range(100)
             
-        ts = timestat("Creating Extra Files Metadata")
-        for modVal in modVals:            
-            tsDBData = timestat("Finding Pages/URL Data For ModVal={0}".format(modVal))
+        ts = timestat("Creating Unofficial Files Metadata")
+        for modVal in modVals:
+            tsDBData = timestat("Finding Pages/URL/MediaCounts Data For ModVal={0}".format(modVal))
             dbData = self.getDBData(modVal)
-            dbArtistURLPages = {artistID: {"Name": artistData.artist.name, "URL": artistData.url.url, "Pages": artistData.pages.pages} for artistID,artistData in dbData.items()}
+            dbArtistURLMedia = {artistID: {"Name": artistData.artist.name,
+                                           "URL": artistData.url.url,
+                                           "MediaCounts": artistData.mediaCounts.counts.get('Unofficial')} for artistID,artistData in dbData.items()}
             tsDBData.stop()
             
-            tsPages = timestat("Finding Artists With More Pages From {0} Artists For ModVal={1}".format(len(dbArtistURLPages), modVal))
-            pagesData = {artistID: artistData for artistID,artistData in dbArtistURLPages.items() if artistData["Pages"] is not None and artistData["Pages"] > 1}
-            tsPages.stop()
+            tsMedia = timestat("Finding Artists With Unofficial MediaCounts From {0} Artists For ModVal={1}".format(len(dbArtistURLMedia), modVal))
+            unofficialData = {artistID: artistData for artistID,artistData in dbArtistURLMedia.items() if artistData["MediaCounts"] is not None}
+            tsMedia.stop()
             
-            tsIgnore = timestat("Removing Ignored Artists From {0} Artists For ModVal={1}".format(len(pagesData), modVal))
-            ignoreData = {artistID: artistData for artistID,artistData in pagesData.items() if artistData["Name"] not in self.extraIgnores}
+            tsIgnore = timestat("Removing Ignored Artists From {0} Artists For ModVal={1}".format(len(unofficialData), modVal))
+            ignoreData = {artistID: artistData for artistID,artistData in unofficialData.items() if artistData["Name"] not in self.unofficialIgnores}
             tsIgnore.stop()
             
-            tsMeta = timestat("Saving Metadata From {0}/{1}/{2} For ModVal={3}".format(len(ignoreData), len(pagesData),len(dbArtistURLPages),modVal))
-            self.metadata[modVal] = ignoreData
+            tsUnofficial = timestat("Finding Known Unofficial Artists From {0} Unofficial Artists For ModVal={1}".format(len(ignoreData), modVal))
+            unofficialFiles = {getBaseFilename(ifile): ifile for ifile in self.dbUnofficial.getArtistUnofficialFiles(modVal, expr=None, force=True)}
+            missingUnofficialIDs = {artistID: artistData for artistID,artistData in ignoreData.items() if unofficialFiles.get(artistID) is None}
+            tsUnofficial.stop()
+            
+            tsMeta = timestat("Saving Metadata From {0}/{1}/{2}/{3} Artists For ModVal={4}".format(len(missingUnofficialIDs), len(ignoreData), len(unofficialData),len(dbArtistURLMedia),modVal))
+            self.metadata[modVal] = missingUnofficialIDs
             tsMeta.stop()
         ts.stop()
         
     
-    def downloadMissingArtistExtras(self):
-        ts = timestat("Downloading Missing Artist Extra Files")
+    def downloadMissingArtistUnofficial(self):
+        ts = timestat("Downloading Missing Artist Unofficial Files")
         for modVal,modValData in self.metadata.items():
-            tsMod = timestat("Downloading {0} Missing Artist Extra Files For ModVal={1}".format(len(modValData), modVal))
+            tsMod = timestat("Downloading {0} Missing Artist Unofficial Files For ModVal={1}".format(len(modValData), modVal))
             N = len(modValData)
             for i,(artistID,artistPageData) in enumerate(modValData.items()):
                 artistName = artistPageData["Name"]
                 artistURL  = artistPageData["URL"]
-                pages      = artistPageData["Pages"]
+                
                 print("="*100)
                 print("{0}/{1}:  [{2}] / [{3}]".format(i,N,artistName,artistURL))
-                for j,page in enumerate(range(pages)):
-                    url      = self.dbArtists.getArtistURL(artistURL, page=page)
-                    savename = self.dutils.getArtistSavename(artistID, page=page)
-                    if isFile(savename):
-                        continue
-
-                    print("{0}/{1}:  [{2}] / [{3}] / [{4}-{5}]".format(i,N,artistName,artistURL,j,pages))
+                url        = self.dbArtists.getArtistURL(artistURL, unofficial=True)
+                savename   = self.dutils.getArtistSavename(artistID, unofficial=True)
+                
+                if isFile(savename):
                     continue
-                    try:
-                        self.dutils.downloadArtistURL(url, savename)
-                    except:
-                        print("Error downloading {0}".format(url))
+
+                try:
+                    self.dutils.downloadArtistURL(url, savename)
+                except:
+                    print("Error downloading {0}".format(url))
                         
             tsMod.stop()
         ts.stop()
-
+        
+        
         
 #################################################################################################################################
-# Extra
+# Unofficial
 #################################################################################################################################
-class dbArtistsExtra(dbArtistsBase):
+class dbArtistsUnofficial(dbArtistsBase):
     def __init__(self, dbArtists):        
         super().__init__(dbArtists)
-        self.setExtra()
+        self.setUnofficial()
+        self.dbArtists = dbArtists
         
-    def parse(self, modVal, expr='< 0 Days', force=True, debug=False):
-        ts = timestat("Parsing ModVal={0} Extra Files".format(modVal))  
+    def parse(self, modVal, expr, force=False, debug=False):
+        ts = timestat("Parsing ModVal={0} Unofficial Files".format(modVal))  
         
         tsFiles  = timestat("Finding Files To Parse")
-        newFiles = self.getArtistExtraFiles(modVal, expr, force=force)
+        newFiles = self.getArtistUnofficialFiles(modVal, expr, force)
         tsFiles.stop()
 
         N = len(newFiles)
@@ -105,22 +113,11 @@ class dbArtistsExtra(dbArtistsBase):
             tsDB.stop()
             
         newData  = 0
-        tsParse = timestat("Parsing {0} New Extra Files For ModVal={1}".format(N, modVal))
-        
+        tsParse = timestat("Parsing {0} New Unofficial Files For ModVal={1}".format(N, modVal))
         for i,ifile in enumerate(newFiles):
             if (i+1) % modValue == 0 or (i+1) == N:
                 print("{0: <15}Parsing {1}".format("{0}/{1}".format(i+1,N), ifile))
             artistID = getBaseFilename(ifile)
-            if len(artistID.split("-")) != 2:
-                print("Error with extra file: {0}".format(ifile))
-                continue
-                
-            try:
-                artistID = artistID.split("-")[0]
-            except:
-                print("Error with extra file: {0}".format(ifile))
-                continue
-                
             info     = self.artist.getData(ifile)
             
             currentKeys = []
@@ -146,9 +143,7 @@ class dbArtistsExtra(dbArtistsBase):
                 dbdata[artistID].media.media[k] = list(Tretval.values())
             newData += 1
             
-        tsParse.stop()
-            
         if newData > 0:
             self.saveDBData(modVal, dbdata, newData)
             
-        return newData > 0
+        tsParse.stop()

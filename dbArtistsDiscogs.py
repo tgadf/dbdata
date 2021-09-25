@@ -53,14 +53,14 @@ class dbArtistsDiscogs:
         url     = urllib.parse.urljoin(baseURL, quote(artistRef))
         url     = urllib.parse.urljoin(url, "?sort=year%2Casc&limit=500") ## Make sure we get 500 entries)
         if unofficial is True:
-            url     = urllib.parse.urljoin(url, "?type=Unofficial") ## Make sure we get 500 entries)
+            url     = urllib.parse.urljoin(url, "?sort=year%2Casc&limit=500&type=Unofficial") ## Make sure we get 500 entries)
         if credit is True:
             url     = urllib.parse.urljoin(url, "?type=Credits") ## Make sure we get 500 entries)
         if isinstance(page, int) and page > 1:
             pageURL = "&page={0}".format(page)
             url = "{0}{1}".format(url, pageURL)
         return url 
-    
+    #https://www.discogs.com/artist/4394799-Jah-Creation?sort=year%2Casc&limit=500&type=Unofficial&page=1
         
     
     ##################################################################################################################

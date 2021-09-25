@@ -1,5 +1,4 @@
 from dbArtistsBase import dbArtistsBase
-from dbArtistsAllMusic import dbArtistsAllMusic
 from fsUtils import isFile
 from fileUtils import getBaseFilename
 from timeUtils import timestat

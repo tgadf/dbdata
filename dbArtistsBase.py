@@ -262,6 +262,15 @@ class dbArtistsBase:
         files = ffd.getFiles(self.getModValDir(modVal))
         newFiles = files if force is True else self.getFilesByRecency(files, expr)
         return newFiles
+    
+    ##########################################
+    ## Unofficial
+    ##########################################            
+    def getArtistUnofficialFiles(self, modVal, expr, force=False):
+        ffd   = filesFromDir(ext=".p")
+        files = ffd.getFiles(self.getModValDir(modVal))
+        newFiles = files if force is True else self.getFilesByRecency(files, expr)
+        return newFiles
         
     def getAllRawSpotifyFiles(self, dirVal, expr, force=False):
         ffd   = filesFromDir(ext=".p")
