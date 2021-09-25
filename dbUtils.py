@@ -68,9 +68,12 @@ class utilsBase:
         if self.debug:
             print("Now Downloading {0}".format(url))
 
-        request=urllib.request.Request(url,None,headers) #The assembled request
-        response = urllib.request.urlopen(request)
-        data = response.read() # The data u need
+        try:
+            request=urllib.request.Request(url,None,headers) #The assembled request
+            response = urllib.request.urlopen(request)
+            data = response.read() # The data u need
+        except:
+            return None, -1
         
         return data, response.getcode()
     

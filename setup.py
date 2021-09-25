@@ -10,6 +10,8 @@ setup(
   name = 'dbdata',
   py_modules = [
       'artistDBBase', 'dbArtistsBase', 'dbBase', 'dbUtils',
+      'dbArtistsParse',
+      'dbArtistsParseExtra',
       'artistAllMusic', 'dbArtistsAllMusic', 
       'artistDiscogs', 'dbArtistsDiscogs', 
       'artistMusicBrainz', 'dbArtistsMusicBrainz', 
@@ -26,8 +28,7 @@ setup(
       'artistAB', 'dbArtistsAceBootlegs', 
       'artistCL', 'dbArtistsCDandLP', 
       'artistDP', 'dbArtistsDatPiff', 
-      'artistMD', 'dbArtistsMusicStack',
-      'dbArtistsParse'],
+      'artistMD', 'dbArtistsMusicStack'],
   version = '0.0.1',
   data_files = [],
   description = 'A Python Wrapper for Music DB Data',

@@ -153,7 +153,10 @@ class dbArtistsAllMusic:
             raise ValueError("URL is None!")
                     
         ## Download data
-        data, response = self.dutils.downloadURL(url)
+        try:
+            data, response = self.dutils.downloadURL(url)
+        except:
+            return False
         if response != 200:
             print("Error downloading {0}".format(url))
             return False
@@ -174,7 +177,10 @@ class dbArtistsAllMusic:
             raise ValueError("URL is None!")
                     
         ## Download data
-        data, response = self.dutils.downloadURL(url)
+        try:
+            data, response = self.dutils.downloadURL(url)
+        except:
+            return False
         if response != 200:
             print("Error downloading {0}".format(url))
             return False
@@ -248,7 +254,10 @@ class dbArtistsAllMusic:
             raise ValueError("URL is None!")
                     
         ## Download data
-        data, response = self.dutils.downloadURL(url)
+        try:
+            data, response = self.dutils.downloadURL(url)
+        except:
+            return False
         if response != 200:
             print("Error downloading {0}".format(url))
             return False
@@ -321,17 +330,23 @@ class dbArtistsAllMusic:
             raise ValueError("URL is None!")
                     
         ## Download data
-        data, response = self.dutils.downloadURL(url)
+        try:
+            data, response = self.dutils.downloadURL(url)
+        except:
+            return 0
         if response != 200:
             print("Error downloading {0}".format(url))
             return False
     
-        self.parseSearchArtistCredit(artist, artistID, data, force)
+        numDownload = self.parseSearchArtistCredit(artist, artistID, data, force)
+        return numDownload
         
       
     def parseSearchArtistCredit(self, artist, artistID, data, force=False):
         if data is None:
             return None
+        
+        numDownload = 0
         
         ## Parse data
         bsdata = getHTML(data)
@@ -379,3 +394,6 @@ class dbArtistsAllMusic:
                     continue
 
             self.dutils.downloadArtistURL(url, savename, force=force)
+            numDownload += 1
+            
+        return numDownload

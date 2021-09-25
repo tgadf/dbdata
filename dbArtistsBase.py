@@ -1,7 +1,9 @@
-from fsUtils import setDir, isFile, setSubFile
+from fsUtils import setDir, isFile, setSubFile, setFile
 from fileUtils import getBaseFilename
+from timeUtils import timestat
 from ioUtils import getFile, saveFile
 from searchUtils import findExt
+from sys import prefix
 from datetime import datetime, timedelta
 from time import sleep, mktime, gmtime
 from os import path
@@ -108,7 +110,7 @@ class dbArtistsBase:
         saveFile(idata=dbdata, ifile=dbname)
         
         
-    def getDBData(self, modVal, force=False):
+    def getDBData(self, modVal, force=False, debug=False):
         dbname = self.disc.getArtistsDBModValFilename(modVal)
         dbdata = {}
         localForce = False
@@ -121,16 +123,53 @@ class dbArtistsBase:
             localForce = True
 
         if localForce is False:
-            print("Loading {0}".format(dbname))
+            if debug:
+                print("Loading {0}".format(dbname))
             dbdata = getFile(dbname, version=3)
             if isinstance(dbdata,Series):
                 dbdata = dbdata.to_dict()
-            print("  ===> Found {0} previous data for ModVal={1}".format(len(dbdata), modVal))
-        else:
+            if debug:
+                print("  ===> Found {0} previous data for ModVal={1}".format(len(dbdata), modVal))
+        else:            
             print("  ===> Forcing Reloads of ModVal={0}".format(modVal))
         
         return dbdata
     
+    
+    ##################################################################################################################
+    # I/O DB Data
+    ##################################################################################################################
+    def getMasterIgnoreFilename(self):
+        return setFile(setDir(prefix, 'dbdata'), 'dbIgnoreData.yaml')
+    
+    def getMasterIgnoreData(self):
+        ignoreData = getFile(self.getMasterIgnoreFilename())
+        return ignoreData
+        
+    def updateMasterIgnoreData(self, db, category, artistIDs):
+        masterIgnoreData = self.getMasterIgnoreData()
+        if masterIgnoreData.get(db) is None:
+            masterIgnoreData[db] = {}
+        if masterIgnoreData[db].get(category) is None:
+            masterIgnoreData[db][category] = []
+        print("Found {0} {1} Ignores".format(len(masterIgnoreData[db][category]), category))
+        masterIgnoreData[db][category] += artistIDs
+        print("Adding {0} {1} Ignores".format(len(artistIDs), category))
+        masterIgnoreData[db][category] = list(set(masterIgnoreData[db][category]))
+        print("Now Have {0} {1} Ignores".format(len(masterIgnoreData[db][category]), category))
+        self.saveMasterIgnoreData(masterIgnoreData)
+        
+    def updateMasterIgnoreCreditData(self, artistIDs):
+        self.updateMasterIgnoreData("AllMusic", "Credit", artistIDs)
+              
+    def updateMasterIgnoreSongData(self, artistIDs):
+        self.updateMasterIgnoreData("AllMusic", "Song", artistIDs)
+              
+    def updateMasterIgnoreNameData(self, db, artistNames):
+        self.updateMasterIgnoreData(db, "Name", artistNames)
+        
+    def saveMasterIgnoreData(self, masterIgnoreData):
+        saveFile(idata=masterIgnoreData, ifile=self.getMasterIgnoreFilename())
         
         
         
@@ -184,32 +223,49 @@ class dbArtistsBase:
     def getArtistPrimaryFiles(self, modVal, expr, force=False):
         ffd   = filesFromDir(ext=".p")
         files = ffd.getFiles(self.getModValDir(modVal))
-        #print("Found {0} Total Files".format(len(files)))
         fname = self.disc.getArtistsDBModValFilename(modVal)
-        #print("Name: {0}".format(fname))
-        newFiles = self.getFilesByLastMod(files, expr, fname)
-        #print("Found {0} New Files".format(len(newFiles)))
+        newFiles = files if force is True else self.getFilesByLastMod(files, expr, fname)
         return newFiles
         
-        
     ##########################################
-    ## Extras
+    ## Raw
     ##########################################    
     def getArtistRawFiles(self, datatype, expr, force=False):
         ffd   = filesFromDir(ext=".p")
         files = ffd.getFiles(setDir(self.disc.getArtistsDir(), datatype))
-        newFiles = self.getFilesByRecency(files, expr)
+        newFiles = files if force is True else self.getFilesByRecency(files, expr)
+        return newFiles
+        
+    ##########################################
+    ## Raw HTML
+    ##########################################    
+    def getArtistRawHTMLFiles(self, expr, force=False):
+        ffd   = filesFromDir(ext=[".html", ".htm"])
+        files = ffd.getFiles(setDir(self.disc.getArtistsDir(), "data"))
+        newFiles = files if force is True else self.getFilesByRecency(files, expr)
+        return newFiles
+    
+    ##########################################
+    ## Credit
+    ##########################################            
+    def getArtistCreditFiles(self, modVal, expr, force=False):
+        ffd   = filesFromDir(ext=".p")
+        files = ffd.getFiles(self.getModValDir(modVal))
+        newFiles = files if force is True else self.getFilesByRecency(files, expr)
+        return newFiles
+    
+    ##########################################
+    ## Extra
+    ##########################################            
+    def getArtistExtraFiles(self, modVal, expr, force=False):
+        ffd   = filesFromDir(ext=".p")
+        files = ffd.getFiles(self.getModValDir(modVal))
+        newFiles = files if force is True else self.getFilesByRecency(files, expr)
         return newFiles
         
     def getAllRawSpotifyFiles(self, dirVal, expr, force=False):
         ffd   = filesFromDir(ext=".p")
         files = ffd.getFiles(setDir(dirVal, "spotify"))
-        newFiles = self.getFilesByRecency(files, expr)
-        return newFiles
-        
-    def getArtistCreditFiles(self, modVal, expr, force=False):
-        ffd   = filesFromDir(ext=".p")
-        files = ffd.getFiles(setDir(self.getModValDir(modVal), "credit"))
         newFiles = self.getFilesByRecency(files, expr)
         return newFiles
         
@@ -224,12 +280,6 @@ class dbArtistsBase:
         files = ffd.getFiles(setDir(self.getModValDir(modVal), "composition"))
         newFiles = self.getFilesByRecency(files, expr)
         return newFiles
-        
-    def getArtistRawHTMLFiles(self, expr, force=False):
-        ffd   = filesFromDir(ext=[".html", ".htm"])
-        files = ffd.getFiles(setDir(self.disc.getArtistsDir(), "data"))
-        newFiles = self.getFilesByRecency(files, expr)
-        return newFiles
 
 
     
@@ -237,6 +287,7 @@ class dbArtistsBase:
     # Collect Metadata About Artists
     ##################################################################################################################
     def createArtistMetadata(self, modVal):
+        ts = timestat("Creating Artist Metadata For ModVal={0}".format(modVal))
         dbdata = self.getDBData(modVal)
     
         artistIDMetadata = {k: [v.artist.name, v.url.url] for k,v in dbdata.items()}
@@ -249,9 +300,11 @@ class dbArtistsBase:
         savename = self.disc.getArtistsDBModValMetadataFilename(modVal)
         print("Saving {0} new artist IDs name data to {1}".format(len(artistIDMetadata), savename))
         saveFile(idata=artistIDMetadata, ifile=savename, debug=False)
+        ts.stop()
         
         
     def createAlbumMetadata(self, modVal):
+        ts = timestat("Creating Artist Album Metadata For ModVal={0}".format(modVal))
         dbdata = self.getDBData(modVal)
         
         artistIDMetadata = {}
@@ -265,3 +318,4 @@ class dbArtistsBase:
         savename = self.disc.getArtistsDBModValAlbumsMetadataFilename(modVal)
         print("Saving {0} new artist IDs name data to {1}".format(len(artistIDMetadata), savename))
         saveFile(idata=artistIDMetadata, ifile=savename, debug=False)
+        ts.stop()
