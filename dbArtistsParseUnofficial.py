@@ -54,6 +54,7 @@ class dbArtistsAssertUnofficial(dbArtistsBase):
             tsUnofficial = timestat("Finding Known Unofficial Artists From {0} Unofficial Artists For ModVal={1}".format(len(ignoreData), modVal))
             unofficialFiles = {getBaseFilename(ifile): ifile for ifile in self.dbUnofficial.getArtistUnofficialFiles(modVal, expr=None, force=True)}
             missingUnofficialIDs = {artistID: artistData for artistID,artistData in ignoreData.items() if unofficialFiles.get(artistID) is None}
+            #return ignoreData, unofficialFiles, missingUnofficialIDs, unofficialData, dbArtistURLMedia
             tsUnofficial.stop()
             
             tsMeta = timestat("Saving Metadata From {0}/{1}/{2}/{3} Artists For ModVal={4}".format(len(missingUnofficialIDs), len(ignoreData), len(unofficialData),len(dbArtistURLMedia),modVal))
@@ -143,7 +144,8 @@ class dbArtistsUnofficial(dbArtistsBase):
                 dbdata[artistID].media.media[k] = list(Tretval.values())
             newData += 1
             
+        tsParse.stop()
+        
+        print("Found {0} Unofficial Artist Records For ModVal={1}".format(newData, modVal))
         if newData > 0:
             self.saveDBData(modVal, dbdata, newData)
-            
-        tsParse.stop()
