@@ -10,7 +10,7 @@ setup(
   name = 'dbdata',
   py_modules = [
       'artistDBBase', 'dbArtistsBase', 'dbBase', 'dbUtils',
-      'dbArtistsParse', 'dbArtistsParseExtra', 'dbArtistsParseCredit', 'dbArtistsParseSong', 'dbArtistsParseUnofficial'
+      'dbArtistsParse', 'dbArtistsParseExtra', 'dbArtistsParseCredit', 'dbArtistsParseSong', 'dbArtistsParseUnofficial',
       'artistAllMusic', 'dbArtistsAllMusic', 
       'artistDiscogs', 'dbArtistsDiscogs', 
       'artistMusicBrainz', 'dbArtistsMusicBrainz', 

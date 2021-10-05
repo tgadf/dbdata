@@ -108,7 +108,7 @@ class dbArtistsRawFiles(dbArtistsBase):
         self.dbArtists = dbArtists
         
     def parse(self, expr, force=False, debug=False):
-        ts = timestat("Parsing ModVal={0} Credit Files".format(modVal))  
+        ts = timestat("Parsing Raw Files")  
         
         tsFiles  = timestat("Finding Files To Parse")
         newFiles = self.getArtistRawFiles(datatype=self.datatype, expr=expr, force=force)
@@ -138,59 +138,6 @@ class dbArtistsRawFiles(dbArtistsBase):
 
 
 
-    
-    
-#################################################################################################################################
-#
-# Unofficial
-#
-#################################################################################################################################
-class dbArtistsUnofficial(dbArtistsBase):
-    def __init__(self, dbArtists):        
-        super().__init__(dbArtists)
-        self.setUnofficial()
-        self.dbArtists = dbArtists
-        
-        
-    def parse(self, modVal, previousDays=None, force=False):
-        newFiles = self.getArtistFiles(modVal, previousDays, force=True)
-        dbdata   = self.getDBData(modVal, force=False)
-    
-        newData = 0
-        for j,ifile in enumerate(newFiles):
-            if force is True:
-                if j % 100 == 0:
-                    print("\tProcessed {0}/{1} files.".format(j,len(newFiles)))
-            artistID = getBaseFilename(ifile)
-            info     = self.artist.getData(ifile)
-            
-            currentKeys = []
-            if dbdata.get(artistID) is not None:
-                currentKeys = list(dbdata[artistID].media.media.keys())
-            else:
-                dbdata[artistID] = info
-                newData += 1
-                continue
-            
-            keys = list(set(list(info.media.media.keys()) + currentKeys))
-            for k in keys:
-                v = info.media.media.get(k)
-                if v is None:
-                    continue
-                iVal  = {v2.code: v2 for v2 in v}
-                dVal  = dbdata[artistID].media.media.get(k)
-                if dVal is None:
-                    Tretval = iVal
-                else:
-                    Tretval = {v2.code: v2 for v2 in dVal}
-                    Tretval.update(iVal)
-                dbdata[artistID].media.media[k] = list(Tretval.values())
-            newData += 1
-            
-        if newData > 0:
-            self.saveDBData(modVal, dbdata, newData)
-            
-        return newData > 0
 
         
 #################################################################################################################################

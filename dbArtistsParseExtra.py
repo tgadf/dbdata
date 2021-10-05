@@ -7,6 +7,10 @@ from time import sleep
 import urllib
 from webUtils import getHTML
 
+from dbArtistsLastFM import dbArtistsLastFM
+from dbArtistsDiscogs import dbArtistsDiscogs
+from dbArtistsMusicBrainz import dbArtistsMusicBrainz
+
 #################################################################################################################################
 # Assert Extra  (All DBs)
 #################################################################################################################################
@@ -16,6 +20,9 @@ class dbArtistsAssertExtra(dbArtistsBase):
         self.setPrimary()
         self.dbArtists = dbArtists
         print("dbArtistsAssertExtra({0})".format(self.db))
+        
+        if not isinstance(dbArtists, (dbArtistsDiscogs,dbArtistsMusicBrainz,dbArtistsLastFM)):
+            raise ValueError("{0} DB is not allowed".format(type(dbArtists)))
         try:
             self.masterIgnoreData = self.getMasterIgnoreData()
             self.extraIgnores = self.masterIgnoreData[self.db]["Name"]
@@ -30,6 +37,16 @@ class dbArtistsAssertExtra(dbArtistsBase):
     def getMetadata(self):
         return self.metadata
     
+    def getNumPages(self, pages):
+        if isinstance(self.dbArtists, dbArtistsLastFM):
+            retval = pages.tot
+        elif isinstance(self.dbArtists, (dbArtistsDiscogs,dbArtistsMusicBrainz)):
+            retval = pages.pages
+        else:
+            raise ValueError("Unsure how to get number of pages for {0}".format(type(dbArtists)))
+            
+        return 1 if retval is None else retval
+    
     def createExtraMetadata(self, modVal=None):
         modVals = [modVal] if modVal is not None else range(100)
             
@@ -37,11 +54,11 @@ class dbArtistsAssertExtra(dbArtistsBase):
         for modVal in modVals:            
             tsDBData = timestat("Finding Pages/URL Data For ModVal={0}".format(modVal))
             dbData = self.getDBData(modVal)
-            dbArtistURLPages = {artistID: {"Name": artistData.artist.name, "URL": artistData.url.url, "Pages": artistData.pages.pages} for artistID,artistData in dbData.items()}
+            dbArtistURLPages = {artistID: {"Name": artistData.artist.name, "URL": artistData.url.url, "Pages": self.getNumPages(artistData.pages)} for artistID,artistData in dbData.items()}
             tsDBData.stop()
             
             tsPages = timestat("Finding Artists With More Pages From {0} Artists For ModVal={1}".format(len(dbArtistURLPages), modVal))
-            pagesData = {artistID: artistData for artistID,artistData in dbArtistURLPages.items() if artistData["Pages"] is not None and artistData["Pages"] > 1}
+            pagesData = {artistID: artistData for artistID,artistData in dbArtistURLPages.items() if artistData["Pages"] > 1}
             tsPages.stop()
             
             tsIgnore = timestat("Removing Ignored Artists From {0} Artists For ModVal={1}".format(len(pagesData), modVal))
@@ -54,7 +71,7 @@ class dbArtistsAssertExtra(dbArtistsBase):
         ts.stop()
         
     
-    def downloadMissingArtistExtras(self):
+    def downloadMissingArtistExtras(self, maxPages=None):
         ts = timestat("Downloading Missing Artist Extra Files")
         for modVal,modValData in self.metadata.items():
             tsMod = timestat("Downloading {0} Missing Artist Extra Files For ModVal={1}".format(len(modValData), modVal))
@@ -66,13 +83,16 @@ class dbArtistsAssertExtra(dbArtistsBase):
                 print("="*100)
                 print("{0}/{1}:  [{2}] / [{3}]".format(i,N,artistName,artistURL))
                 for j,page in enumerate(range(pages)):
+                    if maxPages is not None:
+                        if j > maxPages:
+                            continue
                     url      = self.dbArtists.getArtistURL(artistURL, page=page)
                     savename = self.dutils.getArtistSavename(artistID, page=page)
                     if isFile(savename):
                         continue
 
                     print("{0}/{1}:  [{2}] / [{3}] / [{4}-{5}]".format(i,N,artistName,artistURL,j,pages))
-                    continue
+                    
                     try:
                         self.dutils.downloadArtistURL(url, savename)
                     except:

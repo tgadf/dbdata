@@ -13,7 +13,8 @@ from collections import Counter
 
 class dbBase():
     def __init__(self, db, debug=False):
-        print("="*25,"  {0}  ".format(db),"="*25)
+        if debug:
+            print("="*25,"  {0}  ".format(db),"="*25)
         self.base       = db
         self.debug      = debug
         self.dbsavepath   = setDir("/Users/tgadfort/Music", "Discog", forceExist=False)
@@ -360,6 +361,12 @@ class dbBase():
     # Artist Lookups
     #
     ###############################################################################
+    def getArtistIDToPreMergeNameData(self, debug=False):
+        return self.getDBData("IDToNamePreMerge", "Artist", debug=debug)
+    
+    def getArtistIDToPreMergeRefData(self, debug=False):
+        return self.getDBData("IDToRefPreMerge", "Artist", debug=debug)
+    
     def getArtistIDToNameData(self, debug=False):
         return self.getDBData("IDToName", "Artist", debug=debug)
     
