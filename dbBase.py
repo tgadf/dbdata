@@ -351,6 +351,9 @@ class dbBase():
     def getMasterDBArtistAlbumsFilename(self, debug=False):
         savename = self.getDBData("DB", "MasterArtistAlbums", returnName=True)
         return savename
+
+    def getMasterDBArtistIDToAlbumsData(self, debug=False):
+        return self.getDBData("", "MasterArtistIDToAlbums")
         
     def getMasterDBArtistAlbumsDataFrame(self, debug=False):
         return self.getDBData("DB", "MasterArtistAlbums")
