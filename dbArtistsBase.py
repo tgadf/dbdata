@@ -105,8 +105,8 @@ class dbArtistsBase:
             print("Saving {0} total artist IDs to {1}".format(len(dbdata), dbname))
         dbNumAlbums = sum([self.getArtistNumAlbums(artistData) for artistData in dbdata.values()])
         print("Saving {0} total artist media".format(dbNumAlbums))
-        if isinstance(dbdata, dict):
-            dbdata = Series(dbdata)
+        dbdata = Series(dbdata) if isinstance(dbdata, dict) else dbdata:
+            
         saveFile(idata=dbdata, ifile=dbname)
         
         
@@ -308,7 +308,7 @@ class dbArtistsBase:
         
         savename = self.disc.getArtistsDBModValMetadataFilename(modVal)
         print("Saving {0} new artist IDs name data to {1}".format(len(artistIDMetadata), savename))
-        saveFile(idata=artistIDMetadata, ifile=savename, debug=False)
+        saveFile(idata=Series(artistIDMetadata), ifile=savename, debug=False)
         ts.stop()
         
         
@@ -326,5 +326,5 @@ class dbArtistsBase:
         
         savename = self.disc.getArtistsDBModValAlbumsMetadataFilename(modVal)
         print("Saving {0} new artist IDs name data to {1}".format(len(artistIDMetadata), savename))
-        saveFile(idata=artistIDMetadata, ifile=savename, debug=False)
+        saveFile(idata=Series(artistIDMetadata), ifile=savename, debug=False)
         ts.stop()
