@@ -1,15 +1,17 @@
 from artistDBBase import artistDBBase, artistDBDataClass
 from artistDBBase import artistDBNameClass, artistDBMetaClass, artistDBIDClass, artistDBURLClass, artistDBPageClass
 from artistDBBase import artistDBProfileClass, artistDBMediaClass, artistDBMediaAlbumClass
-from artistDBBase import artistDBMediaDataClass, artistDBMediaCountsClass
+from artistDBBase import artistDBMediaDataClass, artistDBMediaCountsClass, artistDBFileInfoClass
+from artistDBBase import artistDBTextClass, artistDBLinkClass
 from strUtils import fixName
-
+from dbUtils import musicbrainzUtils
 from hashlib import md5
 
 
 class artistMusicBrainz(artistDBBase):
     def __init__(self, debug=False):
         super().__init__(debug)
+        self.utils = musicbrainzUtils()
         
         
     ##############################################################################################################################
@@ -27,13 +29,19 @@ class artistMusicBrainz(artistDBBase):
         profile     = self.getProfile()
         media       = self.getMedia()
         mediaCounts = self.getMediaCounts(media)
+        info        = self.getInfo()
         
-        err = [artist.err, meta.err, url.err, ID.err, pages.err, profile.err, mediaCounts.err, media.err]
-        
-        adc = artistDBDataClass(artist=artist, meta=meta, url=url, ID=ID, pages=pages, profile=profile, mediaCounts=mediaCounts, media=media, err=err)
+        adc = artistDBDataClass(artist=artist, meta=meta, url=url, ID=ID, pages=pages, profile=profile, mediaCounts=mediaCounts, media=media, info=info)
         
         return adc
     
+    
+    ##############################################################################################################################
+    ## File Info
+    ##############################################################################################################################
+    def getInfo(self):
+        afi = artistDBFileInfoClass(info=self.fInfo)
+        return afi
     
 
     ##############################################################################################################################
@@ -107,33 +115,7 @@ class artistMusicBrainz(artistDBBase):
     ## Artist ID
     ##############################################################################################################################
     def getID(self, suburl):
-        ival = "/artist"
-        if isinstance(suburl, artistDBURLClass):
-            suburl = suburl.url
-        if not isinstance(suburl, str):
-            aic = artistDBIDClass(err="NotStr")            
-            return aic
-
-        pos = suburl.find(ival)
-        if pos == -1:
-            aic = artistDBIDClass(err="NotArtist")            
-            return aic
-
-        uuid = suburl[pos+len(ival)+1:]
-
-        
-        m = md5()
-        for val in uuid.split("-"):
-            m.update(val.encode('utf-8'))
-        hashval = m.hexdigest()
-        discID  = str(int(hashval, 16))
-        
-        try:
-            int(discID)
-        except:
-            aic = artistDBIDClass(err="NotInt")            
-            return aic
-
+        discID = self.utils.getArtistID(suburl.url)
         aic = artistDBIDClass(ID=discID)
         return aic
 
@@ -170,29 +152,53 @@ class artistMusicBrainz(artistDBBase):
     ## Artist Variations
     ##############################################################################################################################
     def getProfile(self):   
-        data   = {}        
-        genres = self.bsdata.find("div", {"class": "genre-list"})
-        genre  = self.getNamesAndURLs(genres)
-        style  = []
-        data["Profile"] = {'genre': genre, 'style': style}
-        
-        externalData = {}
-        try:
-            for ul in self.bsdata.findAll("ul", {"class": "external_links"}):
-                lis = ul.findAll("li")
-                for li in lis:
-                    attr = li.attrs["class"][0]
-                    href = li.find("a")
-                    url  = href.attrs["href"]
-                    externalData[attr] = url
-        except:
-            pass
+        ##
+        ## Artist information
+        ##
+        artistInformation = {}
+        properties = self.bsdata.find("dl", {"class": "properties"})
+        if properties is not None:
+            dds = properties.findAll("dd")
+            for val in dds:
+                attrs = val.attrs.get('class')
+                if isinstance(attrs, list) and len(attrs) == 1:
+                    attrKey = attrs[0]
+                    refs    = val.findAll('a')
+                    attrVal = [artistDBTextClass(val)] if len(refs) == 0 else [artistDBLinkClass(ref) for ref in refs]
+                    artistInformation[attrKey] = attrVal
+
+                    
+        ##
+        ## Genres
+        ##
+        genreList = self.bsdata.find("div", {"class": "genre-list"})
+        genreData = [artistDBLinkClass(ref) for ref in genreList.findAll("a")] if genreList is not None else None
 
         
-        apc = artistDBProfileClass(profile=data.get("Profile"), aliases=data.get("Aliases"),
-                                   members=data.get("Members"), groups=data.get("In Groups"),
-                                   sites=data.get("Sites"), variations=data.get("Variations"),
-                                   external=externalData)
+        ##
+        ## Tags
+        ##
+        tagList = self.bsdata.find("div", {"id": "sidebar-tag-list"})
+        tagData = [artistDBLinkClass(ref) for ref in tagList.findAll("a")] if tagList is not None else None
+
+        
+        ##
+        ## External Links
+        ##
+        externalLinks = {}
+        externalLinksList = self.bsdata.find("ul", {"class": "external_links"})
+        if externalLinksList is not None:
+            lis = externalLinksList.findAll("li")
+            for li in lis:
+                attrs = li.attrs.get('class')
+                if isinstance(attrs, list) and len(attrs) == 1:
+                    attrKey = attrs[0]
+                    refs    = li.findAll('a')
+                    attrVal = [artistDBTextClass(li)] if len(refs) == 0 else [artistDBLinkClass(ref) for ref in refs]
+                    externalLinks[attrKey] = attrVal
+
+                    
+        apc = artistDBProfileClass(general=artistInformation, tags=tagData, genres=genreData, external=externalLinks)
         return apc
 
     

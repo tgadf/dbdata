@@ -1,7 +1,8 @@
 from artistDBBase import artistDBBase, artistDBDataClass
 from artistDBBase import artistDBNameClass, artistDBMetaClass, artistDBIDClass, artistDBURLClass, artistDBPageClass
 from artistDBBase import artistDBProfileClass, artistDBMediaClass, artistDBMediaAlbumClass
-from artistDBBase import artistDBMediaDataClass, artistDBMediaCountsClass
+from artistDBBase import artistDBMediaDataClass, artistDBMediaCountsClass, artistDBFileInfoClass
+from artistDBBase import artistDBTextClass, artistDBLinkClass
 from strUtils import fixName
 from dbUtils import utilsDiscogs
 
@@ -27,13 +28,19 @@ class artistDiscogs(artistDBBase):
         profile     = self.getProfile()
         media       = self.getMedia()
         mediaCounts = self.getMediaCounts(media)
+        info        = self.getInfo()
         
-        err = [artist.err, meta.err, url.err, ID.err, pages.err, profile.err, mediaCounts.err, media.err]
-        
-        adc = artistDBDataClass(artist=artist, meta=meta, url=url, ID=ID, pages=pages, profile=profile, mediaCounts=mediaCounts, media=media, err=err)
+        adc = artistDBDataClass(artist=artist, meta=meta, url=url, ID=ID, pages=pages, profile=profile, mediaCounts=mediaCounts, media=media, info=info)
         
         return adc
     
+    
+    ##############################################################################################################################
+    ## File Info
+    ##############################################################################################################################
+    def getInfo(self):
+        afi = artistDBFileInfoClass(info=self.fInfo)
+        return afi
     
 
     ##############################################################################################################################
@@ -128,11 +135,7 @@ class artistDiscogs(artistDBBase):
     ## Artist ID
     ##############################################################################################################################
     def getID(self, suburl):
-        try:
-            discID   = self.dutils.getArtistID(suburl.url)
-        except:
-            aic = artistDBIDClass(err="IDError")            
-            return aic            
+        discID   = self.dutils.getArtistID(suburl.url)
         aic = artistDBIDClass(ID=discID)
         return aic
 
@@ -191,38 +194,19 @@ class artistDiscogs(artistDBBase):
     ##############################################################################################################################
     ## Artist Variations
     ##############################################################################################################################
-    def getProfile(self):          
+    def getProfile(self):  
         result = self.bsdata.find("div", {"class": "profile"})
-        data   = {}
-        if result:
-            heads = result.findAll("div", {"class": "head"})
-            heads = [x.text for x in heads]
-            heads = [x.replace(":","") for x in heads]
-
-            content = result.findAll("div", {"class": "content"})
-            if len(heads) != len(content):
-                raise("Mismatch in head/content")
-
-            for i in range(len(heads)):
-                if heads[i] == "Sites":
-                    content[i] = self.getNamesAndURLs(content[i])
-                elif heads[i] == "In Groups":
-                    content[i] = self.getNamesAndURLs(content[i])
-                elif heads[i] == "Variations":
-                    content[i] = self.getNamesAndURLs(content[i])
-                elif heads[i] == "Aliases":
-                    content[i] = self.getNamesAndURLs(content[i])
-                else:
-                    content[i] = content[i].text
-                    content[i] = content[i].strip()
-                data[heads[i]] = content[i]
-                
-            apc = artistDBProfileClass(profile=data.get("Profile"), aliases=data.get("Aliases"),
-                                     members=data.get("Members"), groups=data.get("In Groups"),
-                                     sites=data.get("Sites"), variations=data.get("Variations"))
-        else:
-            apc = artistDBProfileClass(err="No Profile")
-                
+        heads = result.findAll("div", {"class": "head"})
+        content = result.findAll("div", {"class": "content"})
+        profileData = dict(zip(heads, content)) if len(heads) == len(content) else {}
+        generalData = {}
+        for head,content in profileData.items():
+            key  = head.text[:-1] if isinstance(head.text, str) else None
+            refs = content.findAll("a")
+            val  = [artistDBTextClass(content)] if len(refs) == 0 else [artistDBLinkClass(ref) for ref in refs]
+            generalData[key] = val  
+            
+        apc = artistDBProfileClass(general=generalData)
         return apc
 
     

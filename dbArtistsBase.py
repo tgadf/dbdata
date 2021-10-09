@@ -105,8 +105,8 @@ class dbArtistsBase:
             print("Saving {0} total artist IDs to {1}".format(len(dbdata), dbname))
         dbNumAlbums = sum([self.getArtistNumAlbums(artistData) for artistData in dbdata.values()])
         print("Saving {0} total artist media".format(dbNumAlbums))
-        dbdata = Series(dbdata) if isinstance(dbdata, dict) else dbdata:
-            
+        
+        dbdata = Series(dbdata) if isinstance(dbdata, dict) else dbdata            
         saveFile(idata=dbdata, ifile=dbname)
         
         

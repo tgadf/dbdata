@@ -1,8 +1,12 @@
 from ioUtils import getFile
 from fsUtils import isFile
+from fileInfo import fileInfo
 from webUtils import getHTML, isBS4, isBS4Tag
-from math import ceil, floor
+
 from dbBase import dbBase
+
+from datetime import datetime
+from math import ceil, floor
 from copy import copy, deepcopy
 
 
@@ -51,10 +55,10 @@ class artistDBTagClass:
     
 
 class artistDBTextClass:
-    def __init__(self, text, err=None):
-        self.text  = text
+    def __init__(self, text, err=None):        
         self.err   = None
-        
+        self.text = deepcopy(text.text.strip()) if isBS4Tag(text) else text.strip()
+            
     def get(self):
         return self.__dict__
     
@@ -154,27 +158,13 @@ class artistDBPageClass:
     
 
 class artistDBProfileClass:
-    def __init__(self, profile=None, aliases=None, members=None, sites=None, groups=None, 
-                 formed=None, disbanded=None, related=None, notes=None,
-                 memberof=None, relatedartists=None, born=None, currently=None,
-                 genres=None, search=None, external=None, variations=None, err=None):
-        self.profile         = profile
-        self.aliases         = aliases
-        self.members         = members
-        self.sites           = sites
-        self.formed          = formed
-        self.related         = related
-        self.notes           = notes
-        self.born            = born
-        self.disbanded       = disbanded
-        self.currently       = currently
-        self.memberof        = memberof
-        self.relatedartists  = relatedartists
-        self.genres          = genres
-        self.search          = search
-        self.external        = external
-        self.variations      = variations
-        self.err             = err
+    def __init__(self, general=None, genres=None, tags=None, external=None, extra=None, err=None):
+        self.general  = general
+        self.genres   = genres
+        self.tags     = tags
+        self.external = external
+        self.extra    = extra
+        self.err      = err
         
     def get(self):
         return self.__dict__
@@ -190,10 +180,24 @@ class artistDBURLInfo:
     def get(self):
         return self.__dict__
     
+
+class artistDBFileInfoClass:
+    def __init__(self, info, err=None):
+        self.called = datetime.now()
+        if isinstance(info, fileInfo):
+            self.created  = info.created
+            self.filename = info.ifile
+        else:
+            self.created  = None
+            self.filename = None
+            self.err      = "NoFileInfo"
+        
+    def get(self):
+        return self.__dict__
     
 
 class artistDBDataClass:
-    def __init__(self, artist=None, meta=None, url=None, ID=None, pages=None, profile=None, media=None, mediaCounts=None, err=None):
+    def __init__(self, artist=None, meta=None, url=None, ID=None, pages=None, profile=None, media=None, mediaCounts=None, info=None, err=None):
         self.artist      = artist
         self.meta        = meta
         self.url         = url
@@ -202,7 +206,7 @@ class artistDBDataClass:
         self.profile     = profile
         self.media       = media
         self.mediaCounts = mediaCounts
-        self.err         = err
+        self.info        = info
         
         
     def show(self):
@@ -214,6 +218,9 @@ class artistDBDataClass:
             print("Artist:  {0}".format(self.artist.name))
         print("Meta:    {0}".format(self.meta.title))
         print("         {0}".format(self.meta.url))
+        print("Info:    {0}".format(self.info.filename))
+        print("         {0}".format(self.info.created))
+        print("         {0}".format(self.info.called))
         print("URL:     {0}".format(self.url.url))
         print("ID:      {0}".format(self.ID.ID))
         print("Profile: {0}".format(self.profile.get()))
@@ -228,15 +235,13 @@ class artistDBDataClass:
         return self.__dict__
     
     
-    
-
 
 class artistDBBase:
     def __init__(self, debug=False):
         self.debug  = debug
         self.bsdata = None
         self.bsfile = None
-        
+        self.fInfo  = None
         
     def checkData(self):
         if self.bsdata is None:
@@ -259,6 +264,7 @@ class artistDBBase:
         if isinstance(inputdata, str):
             if isFile(inputdata):
                 self.bsfile = inputdata
+                self.fInfo  = fileInfo(self.bsfile)
                 try:
                     bsdata = getHTML(getFile(inputdata))
                 except:

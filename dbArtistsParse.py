@@ -24,8 +24,8 @@ class dbArtistsPrimary(dbArtistsBase):
         newFiles = self.getArtistPrimaryFiles(modVal, expr, force)
         tsFiles.stop()
 
-        N = len(newFiles)
-        modValue = 250 if N >= 1000 else 50
+        N = len(newFiles)        
+        modValue = max([250 * round((N/10)/250), 250])
         if N > 0:
             tsDB = timestat("Loading ModVal={0} DB Data".format(modVal))
             dbdata   = self.getDBData(modVal, force)
@@ -35,7 +35,8 @@ class dbArtistsPrimary(dbArtistsBase):
         tsParse = timestat("Parsing {0} New Files For ModVal={1}".format(N, modVal))
         for i,ifile in enumerate(newFiles):
             if (i+1) % modValue == 0 or (i+1) == N:
-                print("{0: <15}Parsing {1}".format("{0}/{1}".format(i+1,N), ifile))
+                tsParse.update(n=i+1, N=N)
+                #print("{0: <15}Parsing {1}".format("{0}/{1}".format(i+1,N), ifile))
                 
             artistID = getBaseFilename(ifile)
             info     = self.artist.getData(ifile)
@@ -81,7 +82,8 @@ class dbArtistsRawHTML(dbArtistsBase):
         tsParse = timestat("Parsing {0} Raw HTML Files".format(N))
         for i,ifile in enumerate(newFiles):
             if (i+1) % modValue == 0 or (i+1) == N or debug:
-                print("{0: <15}Parsing {1}".format("{0}/{1}".format(i+1,N), ifile))
+                tsParse.update(n=i+1, N=N)
+                #print("{0: <15}Parsing {1}".format("{0}/{1}".format(i+1,N), ifile))
             
             if debug:
                 print("{0}/{1}\tParsing {2}".format(i,N,ifile))
@@ -121,7 +123,8 @@ class dbArtistsRawFiles(dbArtistsBase):
         modValue = 250 if N >= 500 else 50
         for i,ifile in enumerate(newFiles):
             if (i+1) % modValue == 0 or (i+1) == N:
-                print("{0: <15}Parsing {1}".format("{0}/{1}".format(i+1,N), ifile))
+                tsParse.update(n=i+1, N=N)
+                #print("{0: <15}Parsing {1}".format("{0}/{1}".format(i+1,N), ifile))
             htmldata = getFile(ifile)
             retval   = self.artist.getData(ifile)
             artistID = retval.ID.ID

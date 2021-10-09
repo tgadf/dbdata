@@ -1,7 +1,8 @@
 from artistDBBase import artistDBBase, artistDBDataClass
 from artistDBBase import artistDBNameClass, artistDBMetaClass, artistDBIDClass, artistDBURLClass, artistDBPageClass
 from artistDBBase import artistDBProfileClass, artistDBMediaClass, artistDBMediaAlbumClass
-from artistDBBase import artistDBMediaDataClass, artistDBMediaCountsClass
+from artistDBBase import artistDBMediaDataClass, artistDBMediaCountsClass, artistDBFileInfoClass
+from artistDBBase import artistDBTextClass, artistDBLinkClass
 from strUtils import fixName
 from dbUtils import utilsAllMusic
 
@@ -27,13 +28,19 @@ class artistAllMusic(artistDBBase):
         profile     = self.getProfile()
         media       = self.getMedia()
         mediaCounts = self.getMediaCounts(media)
+        info        = self.getInfo()
         
-        err = [artist.err, meta.err, url.err, ID.err, pages.err, profile.err, mediaCounts.err, media.err]
-        
-        adc = artistDBDataClass(artist=artist, meta=meta, url=url, ID=ID, pages=pages, profile=profile, mediaCounts=mediaCounts, media=media, err=err)
+        adc = artistDBDataClass(artist=artist, meta=meta, url=url, ID=ID, pages=pages, profile=profile, mediaCounts=mediaCounts, media=media, info=info)
         
         return adc
     
+    
+    ##############################################################################################################################
+    ## File Info
+    ##############################################################################################################################
+    def getInfo(self):
+        afi = artistDBFileInfoClass(info=self.fInfo)
+        return afi
     
 
     ##############################################################################################################################
@@ -119,34 +126,6 @@ class artistAllMusic(artistDBBase):
         discID = self.dbUtils.getArtistID(suburl.url, debug=False)
         aic = artistDBIDClass(ID=discID)
         return aic
-    
-    
-        
-        ival = "/artist"
-        if isinstance(suburl, artistDBURLClass):
-            suburl = suburl.url
-        if not isinstance(suburl, str):
-            aic = artistDBIDClass(err="NotStr")            
-            return aic
-
-        pos = suburl.find(ival)
-        if pos == -1:
-            aic = artistDBIDClass(err="NotArtist")            
-            return aic
-
-        data = suburl[pos+len(ival)+1:]
-        pos  = data.rfind("-")
-        discIDurl = data[(pos+3):]       
-        discID = discIDurl.split("/")[0]
-        
-        try:
-            int(discID)
-        except:
-            aic = artistDBIDClass(err="NotInt")            
-            return aic
-
-        aic = artistDBIDClass(ID=discID)
-        return aic
 
 
     
@@ -154,60 +133,15 @@ class artistAllMusic(artistDBBase):
     ## Artist Pages
     ##############################################################################################################################
     def getPages(self):
-        apc   = artistDBPageClass()
-        from numpy import ceil
-        bsdata = self.bsdata
-
-    
         apc   = artistDBPageClass(ppp=1, tot=1, redo=False, more=False)
         return apc
-            
-        pageData = bsdata.find("div", {"class": "pagination bottom"})
-        if pageData is None:
-            err = "pagination bottom"
-            apc = artistDBPageClass(err=err)
-            return apc
-        else:
-            x = pageData.find("strong", {"class": "pagination_total"})
-            if x is None:
-                err = "pagination_total"
-                apc = artistDBPageClass(err=err)
-                return apc
-            else:
-                txt = x.text
-                txt = txt.strip()
-                txt = txt.replace("\n", "")
-                retval = [tmp.strip() for tmp in txt.split('of')]
-
-                try:
-                    ppp   = int(retval[0].split('–')[-1])
-                    tot   = int(retval[1].replace(",", ""))
-                except:
-                    err   = "int"
-                    apc   = artistDBPageClass(err=err)
-                    return apc
-
-                if ppp < 500:
-                    if tot < 25 or ppp == tot:
-                        apc   = artistDBPageClass(ppp=ppp, tot=tot, redo=False, more=False)
-                    else:
-                        apc   = artistDBPageClass(ppp=ppp, tot=tot, redo=True, more=False)
-                else:
-                    if tot < 500:
-                        apc   = artistDBPageClass(ppp=ppp, tot=tot, redo=False, more=False)
-                    else:
-                        apc   = artistDBPageClass(ppp=ppp, tot=tot, redo=False, more=True)
-                        
-                return apc
-            
-        return artistDBPageClass()
     
     
 
     ##############################################################################################################################
     ## Artist Variations
     ##############################################################################################################################
-    def getProfile(self):       
+    def getProfile(self):
         from json import loads
         result = self.bsdata.find("section", {"class": "basic-info"})
         if result is None:
@@ -217,16 +151,12 @@ class artistAllMusic(artistDBBase):
                 searchTerm = searchTerm.replace("Artist Search for ", "")
                 searchTerm = searchTerm.replace(" | AllMusic", "")
                 searchTerm = searchTerm[1:-1]
+                apc = artistDBProfileClass(extra=artistDBTextClass(searchTerm))
+                return apc
             except:
                 apc = artistDBProfileClass(err="No Profile")
                 return apc
             
-            apc = artistDBProfileClass(search=searchTerm)
-            return apc
-            
-            
-            
-           
         data   = {}
        
         members = result.find("div", {"class": "group-members"})
