@@ -1,7 +1,8 @@
 from artistDBBase import artistDBBase, artistDBDataClass
 from artistDBBase import artistDBNameClass, artistDBMetaClass, artistDBIDClass, artistDBURLClass, artistDBURLInfo, artistDBPageClass
 from artistDBBase import artistDBProfileClass, artistDBMediaClass, artistDBMediaAlbumClass
-from artistDBBase import artistDBMediaDataClass, artistDBMediaCountsClass
+from artistDBBase import artistDBMediaDataClass, artistDBMediaCountsClass, artistDBFileInfoClass
+from artistDBBase import artistDBTextClass, artistDBLinkClass, artistDBTagClass
 from strUtils import fixName
 from dbUtils import utilsKWorbSpotify
 from webUtils import removeTag
@@ -31,12 +32,19 @@ class artistKWorbSpotify(artistDBBase):
         media       = self.getMedia()
         mediaCounts = self.getMediaCounts(media)
         ID          = self.getID(artist, mediaCounts)
+        info        = self.getInfo()
         
-        err = [artist.err, meta.err, url.err, ID.err, pages.err, profile.err, mediaCounts.err, media.err]
-        
-        adc = artistDBDataClass(artist=artist, meta=meta, url=url, ID=ID, pages=pages, profile=profile, mediaCounts=mediaCounts, media=media, err=err)
+        adc = artistDBDataClass(artist=artist, meta=meta, url=url, ID=ID, pages=pages, profile=profile, mediaCounts=mediaCounts, media=media, info=info)
         
         return adc
+    
+    
+    ##############################################################################################################################
+    ## File Info
+    ##############################################################################################################################
+    def getInfo(self):
+        afi = artistDBFileInfoClass(info=self.fInfo)
+        return afi
     
     
 
@@ -106,10 +114,7 @@ class artistKWorbSpotify(artistDBBase):
     ## Artist Variations
     ##############################################################################################################################
     def getProfile(self):
-        data    = {}
-        apc = artistDBProfileClass(profile=data.get("Formed"), aliases=data.get("Aliases"),
-                                 members=data.get("Members"), groups=data.get("In Groups"),
-                                 sites=data.get("Sites"), variations=data.get("Variations"))
+        apc = artistDBProfileClass()
         return apc
 
     

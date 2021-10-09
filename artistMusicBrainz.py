@@ -196,9 +196,21 @@ class artistMusicBrainz(artistDBBase):
                     refs    = li.findAll('a')
                     attrVal = [artistDBTextClass(li)] if len(refs) == 0 else [artistDBLinkClass(ref) for ref in refs]
                     externalLinks[attrKey] = attrVal
+                    
+                    
+        ##
+        ## Extra
+        ##
+        tabs        = self.bsdata.find("div", {"class": "tabs"})
+        refs        = tabs.findAll("a") if tabs is not None else None
+        tabLinks    = [artistDBLinkClass(ref) for ref in refs] if refs is not None else None
+        keys        = [x.text for x in tabLinks] if tabLinks is not None else None
+        vals        = tabLinks
+        tabsData    = dict(zip(keys, vals)) if (isinstance(keys, list) and all(keys)) else None
+        extraData   = tabsData
 
                     
-        apc = artistDBProfileClass(general=artistInformation, tags=tagData, genres=genreData, external=externalLinks)
+        apc = artistDBProfileClass(general=artistInformation, tags=tagData, genres=genreData, extra=extraData, external=externalLinks)
         return apc
 
     

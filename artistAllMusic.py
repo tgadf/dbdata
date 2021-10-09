@@ -142,39 +142,55 @@ class artistAllMusic(artistDBBase):
     ## Artist Variations
     ##############################################################################################################################
     def getProfile(self):
-        from json import loads
-        result = self.bsdata.find("section", {"class": "basic-info"})
-        if result is None:
-            try:
-                content = self.bsdata.find("meta", {"name": "title"})
-                searchTerm = content.attrs["content"]
-                searchTerm = searchTerm.replace("Artist Search for ", "")
-                searchTerm = searchTerm.replace(" | AllMusic", "")
-                searchTerm = searchTerm[1:-1]
-                apc = artistDBProfileClass(extra=artistDBTextClass(searchTerm))
-                return apc
-            except:
-                apc = artistDBProfileClass(err="No Profile")
-                return apc
-            
-        data   = {}
-       
-        members = result.find("div", {"class": "group-members"})
-        if members is not None:
-            data["Members"] = [item.text.strip() for item in members.findAll("span")]
-        else:
-            data["Members"] = []
-       
-        genres = result.find("div", {"class": "genre"})
-        genre  = self.getNamesAndURLs(genres)
-        styles = result.find("div", {"class": "styles"})
-        style = self.getNamesAndURLs(styles)
-        #data["Profile"] = str({'genre': genre, 'style': style})
-        data["Profile"] = {'genre': genre, 'style': style}
-               
-        apc = artistDBProfileClass(profile=data.get("Profile"), aliases=data.get("Aliases"),
-                                   members=data.get("Members"), groups=data.get("In Groups"),
-                                   sites=data.get("Sites"), variations=data.get("Variations"))
+        generalData = None
+        genreData   = None
+        tagsData    = None
+        extraData   = None
+
+        content     = self.bsdata.find("meta", {"name": "title"})
+        contentAttr = content.attrs if content is not None else None
+        searchTerm  = contentAttr.get("content") if contentAttr is not None else None
+        searchData  = [artistDBTextClass(searchTerm)] if searchTerm is not None else None
+        
+        tabsul      = self.bsdata.find("ul", {"class": "tabs"})
+        refs        = tabsul.findAll("a") if tabsul is not None else None
+        tabLinks    = [artistDBLinkClass(ref) for ref in refs] if refs is not None else None
+        keys        = [x.title for x in tabLinks] if tabLinks is not None else None
+        vals        = tabLinks
+        tabsData    = dict(zip(keys, vals)) if (isinstance(keys, list) and all(keys)) else None
+
+        if searchData is not None:
+            if extraData is None:
+                extraData = {}
+            extraData["Search"] = searchData
+        if tabsData is not None:
+            if extraData is None:
+                extraData = {}
+            extraData["Tabs"] = tabsData
+
+
+        basicInfo = self.bsdata.find("section", {"class": "basic-info"})
+        if basicInfo is not None:
+            for div in basicInfo.findAll("div"):
+                attrs = div.attrs.get('class')
+                if isinstance(attrs, list) and len(attrs) == 1:
+                    attrKey = attrs[0]
+                    if attrKey == "genre":
+                        refs = div.findAll("a")
+                        val  = [artistDBTextClass(div)] if len(refs) == 0 else [artistDBLinkClass(ref) for ref in refs]
+                        genreData = val
+                    elif attrKey == "styles":
+                        refs = div.findAll("a")
+                        val  = [artistDBTextClass(div)] if len(refs) == 0 else [artistDBLinkClass(ref) for ref in refs]
+                        tagsData = val
+                    else:
+                        if generalData is None:
+                            generalData = {}
+                        refs = div.findAll("a")
+                        val  = [artistDBTextClass(div)] if len(refs) == 0 else [artistDBLinkClass(ref) for ref in refs]
+                        generalData[attrKey] = val
+
+        apc = artistDBProfileClass(general=generalData, tags=tagsData, genres=genreData, extra=extraData)
         return apc
 
     

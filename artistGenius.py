@@ -1,7 +1,8 @@
 from artistDBBase import artistDBBase, artistDBDataClass
 from artistDBBase import artistDBNameClass, artistDBMetaClass, artistDBIDClass, artistDBURLClass, artistDBPageClass
 from artistDBBase import artistDBProfileClass, artistDBMediaClass, artistDBMediaAlbumClass
-from artistDBBase import artistDBMediaDataClass, artistDBMediaCountsClass
+from artistDBBase import artistDBMediaDataClass, artistDBMediaCountsClass, artistDBFileInfoClass
+from artistDBBase import artistDBTextClass, artistDBLinkClass, artistDBTagClass
 from strUtils import fixName
 import json
 from dbUtils import utilsGenius
@@ -30,12 +31,19 @@ class artistGenius(artistDBBase):
         profile     = self.getProfile()        
         media       = self.getMedia(artist)
         mediaCounts = self.getMediaCounts(media)
+        info        = self.getInfo()
         
-        err = [artist.err, meta.err, url.err, ID.err, pages.err, profile.err, mediaCounts.err, media.err]
-        
-        adc = artistDBDataClass(artist=artist, meta=meta, url=url, ID=ID, pages=pages, profile=profile, mediaCounts=mediaCounts, media=media, err=err)
+        adc = artistDBDataClass(artist=artist, meta=meta, url=url, ID=ID, pages=pages, profile=profile, mediaCounts=mediaCounts, media=media, info=info)
         
         return adc
+    
+    
+    ##############################################################################################################################
+    ## File Info
+    ##############################################################################################################################
+    def getInfo(self):
+        afi = artistDBFileInfoClass(info=self.fInfo)
+        return afi
     
     
 
@@ -108,10 +116,7 @@ class artistGenius(artistDBBase):
             return aic
             
         artistID = self.dutils.getArtistID(url, debug=False)
-        if artistID is not None:
-            aic = artistDBIDClass(ID=artistID)
-        else:
-            aic = artistDBIDClass(ID=None, err="NoID")
+        aic = artistDBIDClass(ID=artistID)
         return aic
 
 
@@ -128,7 +133,9 @@ class artistGenius(artistDBBase):
     ##############################################################################################################################
     ## Artist Variations
     ##############################################################################################################################
-    def getProfile(self):              
+    def getProfile(self):  
+        apc = artistDBProfileClass()
+        return apc            
         data = {}
         
         artistdiv  = self.bsdata.find("div", {"id": "tlmdata"})

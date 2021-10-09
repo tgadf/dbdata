@@ -205,8 +205,22 @@ class artistDiscogs(artistDBBase):
             refs = content.findAll("a")
             val  = [artistDBTextClass(content)] if len(refs) == 0 else [artistDBLinkClass(ref) for ref in refs]
             generalData[key] = val  
-            
-        apc = artistDBProfileClass(general=generalData)
+
+
+        extraData={}
+        ulData = self.bsdata.findAll("ul", {"class": "facets_nav"})
+        for ul in ulData:
+            refs  = ul.findAll("a") if ul is not None else None
+            attrs = [[ref.attrs.get('data-credit-type'), ref.attrs.get('data-credit-subtype'),ref] for ref in refs] if refs is not None else None
+            for dctype,dcsubtype,ref in attrs:
+                if not all([dctype,dcsubtype]):
+                    continue
+                if extraData.get(dctype) is None:
+                    extraData[dctype] = {}
+                extraData[dctype][dcsubtype] = artistDBLinkClass(ref)
+        extraData = extraData if len(extraData) > 0 else None
+
+        apc = artistDBProfileClass(general=generalData, extra=extraData)
         return apc
 
     

@@ -1,10 +1,15 @@
 from artistDBBase import artistDBBase, artistDBDataClass
 from artistDBBase import artistDBNameClass, artistDBMetaClass, artistDBIDClass, artistDBURLClass, artistDBPageClass
 from artistDBBase import artistDBProfileClass, artistDBMediaClass, artistDBMediaAlbumClass
-from artistDBBase import artistDBMediaDataClass, artistDBMediaCountsClass
+from artistDBBase import artistDBMediaDataClass, artistDBMediaCountsClass, artistDBFileInfoClass
+from artistDBBase import artistDBTextClass, artistDBLinkClass
 from strUtils import fixName
-import json
+
+from webUtils import removeTag, getHTML
 from dbUtils import utilsLastFM
+
+import json
+from copy import deepcopy
 from hashlib import md5
 
 
@@ -30,13 +35,19 @@ class artistLastFM(artistDBBase):
         profile     = self.getProfile()        
         media       = self.getMedia(artist)
         mediaCounts = self.getMediaCounts(media)
+        info        = self.getInfo()
         
-        err = [artist.err, meta.err, url.err, ID.err, pages.err, profile.err, mediaCounts.err, media.err]
-        
-        adc = artistDBDataClass(artist=artist, meta=meta, url=url, ID=ID, pages=pages, profile=profile, mediaCounts=mediaCounts, media=media, err=err)
+        adc = artistDBDataClass(artist=artist, meta=meta, url=url, ID=ID, pages=pages, profile=profile, mediaCounts=mediaCounts, media=media, info=info)
         
         return adc
     
+    
+    ##############################################################################################################################
+    ## File Info
+    ##############################################################################################################################
+    def getInfo(self):
+        afi = artistDBFileInfoClass(info=self.fInfo)
+        return afi    
     
 
     ##############################################################################################################################
@@ -114,10 +125,7 @@ class artistLastFM(artistDBBase):
     ##############################################################################################################################
     def getID(self, url):        
         artistID = self.dutils.getArtistID(url, debug=False)
-        if artistID is not None:
-            aic = artistDBIDClass(ID=artistID)
-        else:
-            aic = artistDBIDClass(ID=None, err="NoID")
+        aic = artistDBIDClass(ID=artistID)
         return aic
 
 
@@ -160,35 +168,72 @@ class artistLastFM(artistDBBase):
     ##############################################################################################################################
     ## Artist Variations
     ##############################################################################################################################
-    def getProfile(self):              
-        data = {}
+    def getProfile(self):  
+        generalData = {}
         
-        artistdiv  = self.bsdata.find("div", {"id": "tlmdata"})
-        if artistdiv is not None:
-            artistdata = artistdiv.attrs['data-tealium-data']
-        else:
-            artistdata = None
-    
-        if artistdata is not None:
-            try:
-                artistvals = json.loads(artistdata)
-                genres     = artistvals["tag"]
-            except:
-                genres     = None
+        ##
+        ## General
+        ##
+        metadata = self.bsdata.find("div", {"class": "metadata-and-wiki-row"})
+        if metadata is not None:
+            dls = metadata.findAll("dl")
+            for dl in dls:
+                dts = [dt.text for dt in dl.findAll("dt")]    
+                dds = dl.findAll("dd")
+                attrKeys = dts
+                attrVals = []
+                for dd in dds:
+                    refs    = dd.findAll("a")
+                    attrVals.append([artistDBTextClass(dd)] if len(refs) == 0 else [artistDBLinkClass(ref) for ref in refs])
+                dlData = dict(zip(attrKeys,attrVals))
+                generalData["Metadata"] = dlData
 
-            if genres is not None:
-                genres = genres.split(",")
-            else:
-                genres = None
-        else:
-            genres = None
+
+        wikicolumns = self.bsdata.findAll("div", {"class": "wiki-column"})
+        for wikicolumn in wikicolumns:
+            wikiblocks = wikicolumn.findAll("div", {"class": "wiki-block"})
+            for wikiblock in wikiblocks:
+                refs  = wikiblock.findAll("a")
+                links = [artistDBLinkClass(ref) for ref in refs] if (isinstance(refs, list) and len(refs) > 0) else None
+                for ref in refs:
+                    removeTag(wikiblock, ref)
+                text  = artistDBTextClass(wikiblock)
+                if generalData.get("Wiki") is None:
+                    generalData["Wiki"] = {"Text": [], "Refs": []}
+                generalData["Wiki"]["Text"].append(text)
+                for ref in refs:
+                    generalData["Wiki"]["Refs"] += links    
+        if generalData.get("Wiki") is not None:
+            keep = {(ref.href,ref.text): ref for ref in generalData["Wiki"]["Refs"]}
+            generalData["Wiki"]["Refs"] = list(keep.values())
+
+
+        similarData = self.bsdata.find("ol", {"class": "catalogue-overview-similar-artists-full-width"})
+        similarData = self.bsdata.find("section", {"class": "artist-similar-sidebar"}) if similarData is None else similarData
+        lis  = similarData.findAll("li") if similarData is not None else None
+        refs = [li.find("a", {"class": "link-block-target"}) for li in lis] if lis is not None else None
+        similarArtists = [artistDBLinkClass(ref) for ref in refs] if (isinstance(refs, list) and len(refs) > 0) else None
+        extraData = similarArtists
         
-       
-        data["Profile"] = {'genre': genres, 'style': None}
-               
-        apc = artistDBProfileClass(profile=data.get("Profile"), aliases=data.get("Aliases"),
-                                 members=data.get("Members"), groups=data.get("In Groups"),
-                                 sites=data.get("Sites"), variations=data.get("Variations"))
+
+        ##
+        ## Tags
+        ##
+        tags = self.bsdata.find("section", {"class": "catalogue-tags"})
+        refs = tags.findAll("a") if tags is not None else None
+        tagsData = [artistDBLinkClass(ref) for ref in refs] if (isinstance(refs, list) and len(refs) > 0) else None
+
+
+        ##
+        ## External
+        ##
+        external = self.bsdata.find("section", {"class": "external-links-section"})
+        refs = external.findAll("a") if tags is not None else None
+        externalData = [artistDBLinkClass(ref) for ref in refs] if (isinstance(refs, list) and len(refs) > 0) else None
+        
+        generalData = generalData if len(generalData) > 0 else None
+        
+        apc = artistDBProfileClass(general=generalData, tags=tagsData, extra=extraData, external=externalData)
         return apc
 
     
