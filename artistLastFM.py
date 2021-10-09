@@ -228,7 +228,7 @@ class artistLastFM(artistDBBase):
         ## External
         ##
         external = self.bsdata.find("section", {"class": "external-links-section"})
-        refs = external.findAll("a") if tags is not None else None
+        refs = external.findAll("a") if external is not None else None
         externalData = [artistDBLinkClass(ref) for ref in refs] if (isinstance(refs, list) and len(refs) > 0) else None
         
         generalData = generalData if len(generalData) > 0 else None
