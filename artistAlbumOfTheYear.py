@@ -1,7 +1,8 @@
 from artistDBBase import artistDBBase, artistDBDataClass
 from artistDBBase import artistDBNameClass, artistDBMetaClass, artistDBIDClass, artistDBURLClass, artistDBPageClass
 from artistDBBase import artistDBProfileClass, artistDBMediaClass, artistDBMediaAlbumClass
-from artistDBBase import artistDBMediaDataClass, artistDBMediaCountsClass
+from artistDBBase import artistDBMediaDataClass, artistDBMediaCountsClass, artistDBFileInfoClass
+from artistDBBase import artistDBTextClass, artistDBLinkClass, artistDBTagClass
 from strUtils import fixName
 import json
 from dbUtils import utilsAlbumOfTheYear
@@ -31,12 +32,19 @@ class artistAlbumOfTheYear(artistDBBase):
         profile     = self.getProfile()        
         media       = self.getMedia(artist)
         mediaCounts = self.getMediaCounts(media)
+        info        = self.getInfo()
         
-        err = [artist.err, meta.err, url.err, ID.err, pages.err, profile.err, mediaCounts.err, media.err]
-        
-        adc = artistDBDataClass(artist=artist, meta=meta, url=url, ID=ID, pages=pages, profile=profile, mediaCounts=mediaCounts, media=media, err=err)
+        adc = artistDBDataClass(artist=artist, meta=meta, url=url, ID=ID, pages=pages, profile=profile, mediaCounts=mediaCounts, media=media, info=info)
         
         return adc
+    
+    
+    ##############################################################################################################################
+    ## File Info
+    ##############################################################################################################################
+    def getInfo(self):
+        afi = artistDBFileInfoClass(info=self.fInfo)
+        return afi
     
     
 
@@ -125,35 +133,41 @@ class artistAlbumOfTheYear(artistDBBase):
     ##############################################################################################################################
     ## Artist Variations
     ##############################################################################################################################
-    def getProfile(self):              
-        data = {}
+    def getProfile(self):      
+        generalData = {}
+        genreData   = None
+        extraData   = None
+        tagsData    = None
         
-        artistdiv  = self.bsdata.find("div", {"id": "tlmdata"})
-        if artistdiv is not None:
-            artistdata = artistdiv.attrs['data-tealium-data']
-        else:
-            artistdata = None
-    
-        if artistdata is not None:
-            try:
-                artistvals = json.loads(artistdata)
-                genres     = artistvals["tag"]
-            except:
-                genres     = None
+        artistInfo = self.bsdata.find("div", {"class": "artistTopBox info"})
+        detailRows = artistInfo.findAll("div", {"class": "detailRow"})
+        for row in detailRows:
+            span = row.find("span")    
+            if span is None:
+                continue
+            key  = span.text.strip() if span.text is not None else None
+            key  = key[1:].strip() if (isinstance(key,str) and key.startswith("/")) else key
+            refs = row.findAll("a")
+            if len(refs) == 0:
+                continue
+            vals = [artistDBLinkClass(ref) for ref in refs] if (isinstance(refs, list) and len(refs) > 0) else None
 
-            if genres is not None:
-                genres = genres.split(",")
+            if key == "Genres":
+                genreData = vals
             else:
-                genres = None
-        else:
-            genres = None
-        
-       
-        data["Profile"] = {'genre': genres, 'style': None}
-               
-        apc = artistDBProfileClass(profile=data.get("Profile"), aliases=data.get("Aliases"),
-                                 members=data.get("Members"), groups=data.get("In Groups"),
-                                 sites=data.get("Sites"), variations=data.get("Variations"))
+                generalData[key] = vals
+                
+                
+        relatedArtists = self.bsdata.find("div", {"class": "relatedArtists"})
+        artistBlocks   = relatedArtists.findAll("div", {"class": "artistBlock"}) if relatedArtists is not None else None
+        refs           = [artistBlock.find("a") for artistBlock in artistBlocks] if artistBlocks is not None else None
+        if refs is not None:
+            extraData = [artistDBLinkClass(ref) for ref in refs if ref is not None]        
+                
+                
+        generalData = generalData if len(generalData) > 0 else None
+                
+        apc = artistDBProfileClass(general=generalData, genres=genreData, tags=tagsData, extra=extraData)
         return apc
 
     
