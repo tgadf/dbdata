@@ -17,9 +17,9 @@ class artistAlbumOfTheYear(artistDBBase):
         self.debug  = False
         
         
-    ##############################################################################################################################
+    ###########################################################################################################################
     ## Parse Data
-    ##############################################################################################################################
+    ###########################################################################################################################
     def getData(self, inputdata):
         self.getDataBase(inputdata)
         self.checkData()
@@ -39,18 +39,18 @@ class artistAlbumOfTheYear(artistDBBase):
         return adc
     
     
-    ##############################################################################################################################
+    ###########################################################################################################################
     ## File Info
-    ##############################################################################################################################
+    ###########################################################################################################################
     def getInfo(self):
         afi = artistDBFileInfoClass(info=self.fInfo)
         return afi
     
     
 
-    ##############################################################################################################################
+    ###########################################################################################################################
     ## Artist Name
-    ##############################################################################################################################
+    ###########################################################################################################################
     def getName(self):
         script = self.bsdata.find("script", {"type": "application/ld+json"})
         if script is None:
@@ -68,9 +68,9 @@ class artistAlbumOfTheYear(artistDBBase):
 
     
 
-    ##############################################################################################################################
+    ###########################################################################################################################
     ## Meta Information
-    ##############################################################################################################################
+    ###########################################################################################################################
     def getMeta(self):
         metatitle = self.bsdata.find("meta", {"property": "og:title"})
         metaurl   = self.bsdata.find("meta", {"property": "og:url"})
@@ -87,9 +87,9 @@ class artistAlbumOfTheYear(artistDBBase):
         return amc
         
 
-    ##############################################################################################################################
+    ###########################################################################################################################
     ## Artist URL
-    ##############################################################################################################################
+    ###########################################################################################################################
     def getURL(self):
         metalink = self.bsdata.find("meta", {"property": "og:url"})
         if metalink is None:
@@ -107,22 +107,19 @@ class artistAlbumOfTheYear(artistDBBase):
 
     
 
-    ##############################################################################################################################
+    ###########################################################################################################################
     ## Artist ID
-    ##############################################################################################################################
-    def getID(self, url):        
+    ###########################################################################################################################
+    def getID(self, url):
         artistID = self.dutils.getArtistID(url, debug=False)
-        if artistID is not None:
-            aic = artistDBIDClass(ID=artistID)
-        else:
-            aic = artistDBIDClass(ID=None, err="NoID")
+        aic = artistDBIDClass(ID=artistID)
         return aic
 
 
     
-    ##############################################################################################################################
+    ###########################################################################################################################
     ## Artist Pages
-    ##############################################################################################################################
+    ###########################################################################################################################
     def getPages(self):
         tot = 1
         apc   = artistDBPageClass(ppp=1, tot=tot, redo=False, more=False)
@@ -130,9 +127,9 @@ class artistAlbumOfTheYear(artistDBBase):
     
     
 
-    ##############################################################################################################################
+    ###########################################################################################################################
     ## Artist Variations
-    ##############################################################################################################################
+    ###########################################################################################################################
     def getProfile(self):      
         generalData = {}
         genreData   = None
@@ -140,7 +137,7 @@ class artistAlbumOfTheYear(artistDBBase):
         tagsData    = None
         
         artistInfo = self.bsdata.find("div", {"class": "artistTopBox info"})
-        detailRows = artistInfo.findAll("div", {"class": "detailRow"})
+        detailRows = artistInfo.findAll("div", {"class": "detailRow"}) if artistInfo is not None else []
         for row in detailRows:
             span = row.find("span")    
             if span is None:
@@ -172,58 +169,51 @@ class artistAlbumOfTheYear(artistDBBase):
 
     
     
-    ##############################################################################################################################
+    ###########################################################################################################################
     ## Artist Media
-    ############################################################################################################################## 
+    ########################################################################################################################### 
     def getMedia(self, artist):
         amc  = artistDBMediaClass()
-        name = "Albums"
-        amc.media[name] = []
-        
-        mediaType = "Albums"
-        
-        albumsData = self.bsdata.findAll("div", {"class": "albumBlock"})
-        for albumData in albumsData:
-            ## Name
-            albumName = albumData.find("div", {"class": "albumTitle"})
-            albumTitle = None
-            if albumName is not None:
-                albumTitle = albumName.text        
-                
-            ## URL
-            albumURL  = albumData.find("a")
-            albumHREF = None
-            if albumURL is not None:
-                albumHREF = albumURL.attrs['href']
-                  
-            ## Year
-            albumYear = None
-            albumDate = albumData.find("div", {"class": "date"})
-            if albumDate is not None:
-                albumYear = albumDate.text
 
-            mediaTypeData = albumData.find("div", {"class": "type"})
-            if mediaTypeData:
-                mediaType = mediaTypeData.text
-            else:
-                mediaType = "Albums"
-                
-            code = self.dutils.getAlbumCode(name=albumTitle, url=albumHREF)
-                
-            amdc = artistDBMediaDataClass(album=albumTitle, url=albumHREF, aclass=None, aformat=None, artist=[artist.name], code=code, year=albumYear)
+        albumBlocks = self.bsdata.findAll("div", {"class": "albumBlock"})
+        for i,albumBlock in enumerate(albumBlocks):
+            #print(i,'/',len(albumBlocks))
+            blockData = {}
+            for div in albumBlock.findAll("div"):
+                attr = div.attrs.get("class")
+                key  = attr[0] if isinstance(attr,list) else None
+                ref  = div.find("a")
+                val  = artistDBLinkClass(ref) if ref is not None else artistDBTextClass(div)
+                blockData[key] = val
+
+            urlData = blockData.get("image")
+            url = urlData.href if isinstance(urlData, artistDBLinkClass) else None
+
+            titleData = blockData.get("albumTitle")
+            title = titleData.text if isinstance(titleData, artistDBTextClass) else None
+
+            yearData = blockData.get("date")
+            year = yearData.text if isinstance(yearData, artistDBTextClass) else None
+
+            mediaTypeData = blockData.get("type")
+            mediaType = mediaTypeData.text if isinstance(mediaTypeData, artistDBTextClass) else None
+
+            code = self.dutils.getAlbumCode(name=title, url=url)
+            amdc = artistDBMediaDataClass(album=title, url=url, aclass=None, aformat=None, artist="U2", code=code, year=year)
+            
             if amc.media.get(mediaType) is None:
                 amc.media[mediaType] = []
             amc.media[mediaType].append(amdc)
             if self.debug:
-                print("\t\tAdding Media ({0} -- {1})".format(album, url))  
+                print("\t\tAdding Media ({0} -- {1})".format(title, url))  
 
         return amc
     
     
 
-    ##############################################################################################################################
+    ###########################################################################################################################
     ## Artist Media Counts
-    ##############################################################################################################################
+    ###########################################################################################################################
     def getMediaCounts(self, media):
         amcc = artistDBMediaCountsClass()
         

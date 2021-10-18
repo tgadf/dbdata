@@ -17,8 +17,8 @@ class dbArtistsPrimary(dbArtistsBase):
         self.setPrimary()
         self.dbArtists = dbArtists
         
-    def parse(self, modVal, expr, force=False, debug=False):
-        ts = timestat("Parsing ModVal={0} Primary Files".format(modVal))  
+    def parse(self, modVal, expr, force=False, debug=False, quiet=False):
+        ts = timestat("Parsing ModVal={0} Primary Files".format(modVal))
         
         tsFiles  = timestat("Finding Files To Parse")
         newFiles = self.getArtistPrimaryFiles(modVal, expr, force)
@@ -68,7 +68,7 @@ class dbArtistsRawHTML(dbArtistsBase):
         self.setPrimary()
         self.dbArtists = dbArtists
             
-    def parse(self, expr, force=False, debug=False):
+    def parse(self, expr, force=False, debug=False, quiet=False):
         ts = timestat("Parsing Raw HTML Files")
         
         tsFiles  = timestat("Finding Files To Parse")
@@ -109,7 +109,7 @@ class dbArtistsRawFiles(dbArtistsBase):
         self.datatype  = datatype
         self.dbArtists = dbArtists
         
-    def parse(self, expr, force=False, debug=False):
+    def parse(self, expr, force=False, debug=False, quiet=False):
         ts = timestat("Parsing Raw Files")  
         
         tsFiles  = timestat("Finding Files To Parse")
