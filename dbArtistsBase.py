@@ -301,6 +301,9 @@ class dbArtistsBase:
     
         artistIDMetadata = {k: [v.artist.name, v.url.url] for k,v in dbdata.items()}
         for artistID,artistData in dbdata.items():
+            artistIDMetadata[artistID].append([artistData.artist.name])        
+            continue
+            
             if artistData.profile.variations is not None:
                 artistIDMetadata[artistID].append([v2.name for v2 in artistData.profile.variations])
             else:

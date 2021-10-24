@@ -1,6 +1,7 @@
 from ioUtils import getFile
 from fsUtils import isFile
 from fileInfo import fileInfo
+from fileIO import fileIO
 from webUtils import getHTML, isBS4, isBS4Tag
 
 from dbBase import dbBase
@@ -8,6 +9,7 @@ from dbBase import dbBase
 from datetime import datetime
 from math import ceil, floor
 from copy import copy, deepcopy
+
 
 
 class artistDBIDClass:
@@ -240,12 +242,13 @@ class artistDBBase:
     def __init__(self, debug=False):
         self.debug  = debug
         self.bsdata = None
+        self.dbdata = None
         self.bsfile = None
         self.fInfo  = None
         
     def checkData(self):
-        if self.bsdata is None:
-            raise ValueError("There is no BS4 data!")
+        if self.bsdata is None and self.dbdata is None:
+            raise ValueError("There is no BS4 or DB data!")
         
         
     def getNamesAndURLs(self, content):
@@ -261,8 +264,29 @@ class artistDBBase:
 
         
     def getDataBase(self, inputdata):
-        if isinstance(inputdata, str):
-            if isFile(inputdata):
+        if fileInfo(inputdata).isfile:
+            ioData = fileIO().get(inputdata)
+            if isinstance(ioData, artistDBDataClass):
+                self.dbdata = ioData
+                return
+            elif isinstance(ioData, str):
+                try:
+                    self.bsdata = getHTML(ioData)
+                except:
+                    raise ValueError("Cannot read artist file: {0}".format(inputdata))
+                return
+            elif isBS4(ioData):
+                self.bsdata = ioData
+                return
+            else:
+                raise ValueError("Not sure about file data type: {0}".format(type(ioData)))
+        else:
+            raise ValueError("Not sure about input type: {0}".format(type(inputdata)))
+
+        return
+            
+        """ 
+                #if isFile(inputdata):
                 self.bsfile = inputdata
                 self.fInfo  = fileInfo(self.bsfile)
                 try:
@@ -286,3 +310,4 @@ class artistDBBase:
         self.bsdata = bsdata
         
         #return self.parse()
+        """

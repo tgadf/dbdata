@@ -291,6 +291,8 @@ class utilsLastFM(utilsBase):
         return href
         
     def getArtistID(self, href, debug=False):
+        if href is None:
+            return None
         if href.startswith(self.baseURL):
             if debug:
                 print("Removing {0} from url --> {1}".format(self.baseURL,href))

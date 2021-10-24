@@ -7,6 +7,10 @@ from sys import prefix
 import urllib
 from time import sleep
 from webUtils import getHTML
+    
+from fileIO import fileIO
+from fileInfo import fileInfo
+
 
 #################################################################################################################################
 # Primary
@@ -57,6 +61,35 @@ class dbArtistsPrimary(dbArtistsBase):
         ts.stop()
         
         return newData > 0
+    
+
+#################################################################################################################################
+# Parse From HTML
+#################################################################################################################################
+class dbArtistsHTML(dbArtistsBase):
+    def __init__(self, dbArtists):
+        super().__init__(dbArtists)
+        self.setPrimary()
+        self.dbArtists = dbArtists
+            
+    def parse(self, expr, force=False, debug=False, quiet=False):
+        ts = timestat("Parsing Raw HTML Files")
+        
+        io = fileIO()
+        newFiles = self.getArtistRawHTMLFiles(expr, force=force)
+        
+        N = len(newFiles)
+        modValue = 250 if N >= 500 else 50
+        tsParse = timestat("Parsing {0} Raw HTML Files".format(N))
+        for i,ifile in enumerate(newFiles):
+            if (i+1) % modValue == 0 or (i+1) == N:
+                tsParse.update(n=i+1, N=N)
+            htmldata = io.get(ifile)
+            retval   = self.artist.getData(ifile)
+            artistID = retval.ID.ID
+            savename = self.dutils.getArtistSavename(artistID)
+            if not fileInfo(savename).exists:
+                io.save(idata=retval, ifile=savename)
 
 
 #################################################################################################################################

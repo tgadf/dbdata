@@ -21,6 +21,8 @@ class artistRateYourMusic(artistDBBase):
     def getData(self, inputdata):
         self.getDataBase(inputdata)
         self.checkData()
+        if self.dbdata is not None:
+            return self.dbdata
         
         artist      = self.getName()
         meta        = self.getMeta()
