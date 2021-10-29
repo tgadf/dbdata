@@ -9,7 +9,7 @@ from time import sleep
 from webUtils import getHTML
     
 from fileIO import fileIO
-from fileInfo import fileInfo
+from fsUtils import fileUtil
 
 
 #################################################################################################################################
@@ -35,7 +35,7 @@ class dbArtistsPrimary(dbArtistsBase):
         
         modValue = max([250 * round((N/10)/250), 250])
 
-        if force is True or not fileInfo(self.disc.getArtistsDBModValFilename(modVal)).exists:
+        if force is True or not fileUtil(self.disc.getArtistsDBModValFilename(modVal)).exists:
             tsDB = timestat("Creating New DB For ModVal={0}".format(modVal))
             dbdata = {}
             ts.stop()
@@ -98,7 +98,7 @@ class dbArtistsHTML(dbArtistsBase):
             retval   = self.artist.getData(ifile)
             artistID = retval.ID.ID
             savename = self.dutils.getArtistSavename(artistID)
-            if isinstance(savename,str) and not fileInfo(savename).exists:                
+            if isinstance(savename,str) and not fileUtil(savename).exists:                
                 io.save(idata=retval, ifile=savename)
                 nSave += 1
                 
@@ -131,7 +131,7 @@ class dbArtistsPickleHTML(dbArtistsBase):
             artistID = retval.ID.ID
             savename = self.dutils.getArtistSavename(artistID)
             print(ifile,'\t',artistID,'\t',savename)
-            if isinstance(savename,str) and not fileInfo(savename).exists:
+            if isinstance(savename,str) and not fileUtil(savename).exists:
                 io.save(idata=retval, ifile=savename)
                 
         ts.stop()

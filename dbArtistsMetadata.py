@@ -1,31 +1,35 @@
 from timeUtils import timestat
 from fileIO import fileIO
-from fileInfo import fileInfo
 from dbArtistsBase import dbArtistsBase
+from pandas import Series
 
 ##################################################################################################################
 # Collect Metadata About Artists
 ##################################################################################################################
-class dbArtistMetadata:
-    def __init__(self, dbArtists):        
+class dbArtistMetadata(dbArtistsBase):
+    def __init__(self, dbArtists, modVal):        
         super().__init__(dbArtists)
         self.setPrimary()
         self.dbArtists = dbArtists
-        self.io = fileIO()
+        self.io        = fileIO()
+        self.dbData    = self.getDBData(modVal)
+        self.modVal    = modVal
     
     
-    def createArtistMetadata(self, modVal):
+    def createArtistMetadata(self):
+        modVal = self.modVal
         ts = timestat("Creating Artist Name Metadata For ModVal={0}".format(modVal))
-        artistIDMetadata = Series({artistID: [artistData.artist.name, artistData.url.url] for artistID,artistData in self.getDBData(modVal).items()})
+        artistIDMetadata = Series({artistID: [artistData.artist.name, artistData.url.url] for artistID,artistData in self.dbData.items()})
         savename = self.disc.getArtistsDBModValMetadataFilename(modVal)
         print("Saving {0} new artist IDs name data to {1}".format(len(artistIDMetadata), savename))
         self.io.save(idata=artistIDMetadata, ifile=savename)
         ts.stop()
         
         
-    def createAlbumMetadata(self, modVal):
+    def createAlbumMetadata(self):
+        modVal = self.modVal
         ts = timestat("Creating Artist Album Metadata For ModVal={0}".format(modVal))
-        dbdata = self.getDBData(modVal)
+        dbdata = self.dbData
         
         artistIDMetadata = {}
         for artistID,artistData in dbdata.items():
@@ -37,5 +41,5 @@ class dbArtistMetadata:
         
         savename = self.disc.getArtistsDBModValAlbumsMetadataFilename(modVal)
         print("Saving {0} new artist IDs name data to {1}".format(len(artistIDMetadata), savename))
-        self.io.save(idata=artistIDMetadata, ifile=savename)
+        self.io.save(idata=Series(artistIDMetadata), ifile=savename)
         ts.stop()
