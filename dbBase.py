@@ -2,8 +2,9 @@ from fsUtils import isDir, setDir, mkDir, setFile, isFile
 from ioUtils import getFile, saveFile
 from os import getcwd
 from dbUtils import discogsUtils
-from fsUtils import moveFile, moveDir
+from fsUtils import moveFile, moveDir, fileUtil
 from fileUtils import getFileBasics, getBasename, getDirname
+from fileIO import fileIO
 from searchUtils import findExt, findPattern
 from glob import glob
 from os.path import join
@@ -187,11 +188,9 @@ class dbBase():
         return dbfile
     
     def getArtistsDBModValData(self, modVal):
-        dbfile = self.getArtistsDBModValFilename(modVal)
-        if not isFile(dbfile):
-            raise ValueError("{0} does not exist".format(dbfile))
-        dbdata = getFile(dbfile)
-        return dbdata
+        io     = fileIO()
+        ifile  = self.getArtistsDBModValFilename(modVal)
+        return fileIO().get(ifile) if fileUtil(ifile).exists else None
     
     def saveArtistsDBModValData(self, modVal, dbdata):
         dbfile = self.getArtistsDBModValFilename(modVal)
@@ -236,7 +235,8 @@ class dbBase():
             return self.metadirnames[key]
         else:
             raise ValueError("Base is illegal: {0}".format(self.base))
-    
+
+    """
     def getAlbumsMetadataDBDir(self, debug=False):
         key = "albums-{0}-db/metadata".format(self.base)
         if self.metadirnames.get(key) is not None:
@@ -266,7 +266,7 @@ class dbBase():
             raise ValueError("{0} does not exist".format(dbfile))
         dbdata = getFile(dbfile)
         return dbdata
-
+    """
 
     ###############################################################################
     ##

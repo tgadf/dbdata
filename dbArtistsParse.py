@@ -22,17 +22,26 @@ class dbArtistsPrimary(dbArtistsBase):
         self.dbArtists = dbArtists
         
     def parse(self, modVal, expr, force=False, debug=False, quiet=False):
-        ts = timestat("Parsing ModVal={0} Primary Files".format(modVal))
-        
+        ts = timestat("Parsing Primary ModVal={0} Files(expr=\'{1}\', force={2}, debug={3}, quiet={4})".format(modVal, expr, force, debug, quiet))
+                
         tsFiles  = timestat("Finding Files To Parse")
         newFiles = self.getArtistPrimaryFiles(modVal, expr, force)
         tsFiles.stop()
 
         N = len(newFiles)        
+        if N == 0:
+            ts.stop()
+            return
+        
         modValue = max([250 * round((N/10)/250), 250])
-        if N > 0:
+
+        if force is True or not fileInfo(self.disc.getArtistsDBModValFilename(modVal)).exists:
+            tsDB = timestat("Creating New DB For ModVal={0}".format(modVal))
+            dbdata = {}
+            ts.stop()
+        else:
             tsDB = timestat("Loading ModVal={0} DB Data".format(modVal))
-            dbdata   = self.getDBData(modVal, force)
+            dbdata = self.getDBData(modVal, force)
             tsDB.stop()
             
         newData  = 0
@@ -73,13 +82,14 @@ class dbArtistsHTML(dbArtistsBase):
         self.dbArtists = dbArtists
             
     def parse(self, expr, force=False, debug=False, quiet=False):
-        ts = timestat("Parsing Raw HTML Files")
+        ts = timestat("Parsing Raw HTML Files(expr=\'{0}\', force={1}, debug={2}, quiet={3})".format(expr, force, debug, quiet))
         
         io = fileIO()
         newFiles = self.getArtistRawHTMLFiles(expr, force=force)
         
         N = len(newFiles)
         modValue = 250 if N >= 500 else 50
+        nSave = 0
         tsParse = timestat("Parsing {0} Raw HTML Files".format(N))
         for i,ifile in enumerate(newFiles):
             if (i+1) % modValue == 0 or (i+1) == N:
@@ -88,9 +98,45 @@ class dbArtistsHTML(dbArtistsBase):
             retval   = self.artist.getData(ifile)
             artistID = retval.ID.ID
             savename = self.dutils.getArtistSavename(artistID)
-            if not fileInfo(savename).exists:
+            if isinstance(savename,str) and not fileInfo(savename).exists:                
                 io.save(idata=retval, ifile=savename)
+                nSave += 1
+                
+        ts.stop()
+        print("Saved {0} New Files".format(nSave))
+    
 
+#################################################################################################################################
+# Parse From Pickled HTML
+#################################################################################################################################
+class dbArtistsPickleHTML(dbArtistsBase):
+    def __init__(self, dbArtists):
+        super().__init__(dbArtists)
+        self.setPrimary()
+        self.dbArtists = dbArtists
+            
+    def parse(self, expr, force=False, debug=False, quiet=False):
+        ts = timestat("Parsing Raw Pickled HTML Files(expr=\'{0}\', force={1}, debug={2}, quiet={3})".format(expr, force, debug, quiet))
+        
+        io = fileIO()
+        newFiles = self.getArtistRawFiles(datatype="data", expr=expr, force=force)
+        
+        N = len(newFiles)
+        modValue = 250 if N >= 500 else 50
+        tsParse = timestat("Parsing {0} Raw Picked HTML Files".format(N))
+        for i,ifile in enumerate(newFiles):
+            if (i+1) % modValue == 0 or (i+1) == N or debug:
+                tsParse.update(n=i+1, N=N)
+            retval   = self.artist.getData(ifile)
+            artistID = retval.ID.ID
+            savename = self.dutils.getArtistSavename(artistID)
+            print(ifile,'\t',artistID,'\t',savename)
+            if isinstance(savename,str) and not fileInfo(savename).exists:
+                io.save(idata=retval, ifile=savename)
+                
+        ts.stop()
+        print("Saved {0} New Files".format(nSave))
+                
 
 #################################################################################################################################
 # Parse From Raw HTML

@@ -19,7 +19,7 @@ class artistIDBase:
         self.err = None
         if s is None:
             self.err = "None"            
-        elif not isinstance(s, str):s
+        elif not isinstance(s, str):
             self.err = type(s)
 
     def getErr(self):

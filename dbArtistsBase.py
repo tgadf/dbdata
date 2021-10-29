@@ -1,7 +1,8 @@
 from fsUtils import setDir, isFile, setSubFile, setFile
 from fileUtils import getBaseFilename
+from fileIO import fileIO
 from timeUtils import timestat
-from ioUtils import getFile, saveFile
+from ioUtils import getFile
 from searchUtils import findExt
 from sys import prefix
 from datetime import datetime, timedelta
@@ -106,8 +107,9 @@ class dbArtistsBase:
         dbNumAlbums = sum([self.getArtistNumAlbums(artistData) for artistData in dbdata.values()])
         print("Saving {0} total artist media".format(dbNumAlbums))
         
-        dbdata = Series(dbdata) if isinstance(dbdata, dict) else dbdata            
-        saveFile(idata=dbdata, ifile=dbname)
+        dbdata = Series(dbdata) if isinstance(dbdata, dict) else dbdata
+        io = fileIO()
+        io.save(idata=dbdata, ifile=dbname)
         
         
     def getDBData(self, modVal, force=False, debug=False):
@@ -125,7 +127,7 @@ class dbArtistsBase:
         if localForce is False:
             if debug:
                 print("Loading {0}".format(dbname))
-            dbdata = getFile(dbname, version=3)
+            dbdata = fileIO().get(dbname)
             if isinstance(dbdata,Series):
                 dbdata = dbdata.to_dict()
             if debug:
@@ -143,8 +145,7 @@ class dbArtistsBase:
         return setFile(setDir(prefix, 'dbdata'), 'dbIgnoreData.yaml')
     
     def getMasterIgnoreData(self):
-        ignoreData = getFile(self.getMasterIgnoreFilename())
-        return ignoreData
+        return fileIO().get(self.getMasterIgnoreFilename())
         
     def updateMasterIgnoreData(self, db, category, artistIDs):
         masterIgnoreData = self.getMasterIgnoreData()
@@ -169,7 +170,7 @@ class dbArtistsBase:
         self.updateMasterIgnoreData(db, "Name", artistNames)
         
     def saveMasterIgnoreData(self, masterIgnoreData):
-        saveFile(idata=masterIgnoreData, ifile=self.getMasterIgnoreFilename())
+        fileIO().save(idata=masterIgnoreData, ifile=self.getMasterIgnoreFilename())
         
         
         
@@ -275,59 +276,17 @@ class dbArtistsBase:
     def getAllRawSpotifyFiles(self, dirVal, expr, force=False):
         ffd   = filesFromDir(ext=".p")
         files = ffd.getFiles(setDir(dirVal, "spotify"))
-        newFiles = self.getFilesByRecency(files, expr)
+        newFiles = files if force is True else self.getFilesByRecency(files, expr)
         return newFiles
         
     def getArtistSongFiles(self, modVal, expr, force=False):
         ffd   = filesFromDir(ext=".p")
         files = ffd.getFiles(setDir(self.getModValDir(modVal), "song"))
-        newFiles = self.getFilesByRecency(files, expr)
+        newFiles = files if force is True else self.getFilesByRecency(files, expr)
         return newFiles
         
     def getArtistCompositionFiles(self, modVal, expr, force=False):
         ffd   = filesFromDir(ext=".p")
         files = ffd.getFiles(setDir(self.getModValDir(modVal), "composition"))
-        newFiles = self.getFilesByRecency(files, expr)
+        newFiles = files if force is True else self.getFilesByRecency(files, expr)
         return newFiles
-
-
-    
-    ##################################################################################################################
-    # Collect Metadata About Artists
-    ##################################################################################################################
-    def createArtistMetadata(self, modVal):
-        ts = timestat("Creating Artist Metadata For ModVal={0}".format(modVal))
-        dbdata = self.getDBData(modVal)
-    
-        artistIDMetadata = {k: [v.artist.name, v.url.url] for k,v in dbdata.items()}
-        for artistID,artistData in dbdata.items():
-            artistIDMetadata[artistID].append([artistData.artist.name])        
-            continue
-            
-            if artistData.profile.variations is not None:
-                artistIDMetadata[artistID].append([v2.name for v2 in artistData.profile.variations])
-            else:
-                artistIDMetadata[artistID].append([artistData.artist.name])        
-        
-        savename = self.disc.getArtistsDBModValMetadataFilename(modVal)
-        print("Saving {0} new artist IDs name data to {1}".format(len(artistIDMetadata), savename))
-        saveFile(idata=Series(artistIDMetadata), ifile=savename, debug=False)
-        ts.stop()
-        
-        
-    def createAlbumMetadata(self, modVal):
-        ts = timestat("Creating Artist Album Metadata For ModVal={0}".format(modVal))
-        dbdata = self.getDBData(modVal)
-        
-        artistIDMetadata = {}
-        for artistID,artistData in dbdata.items():
-            artistIDMetadata[artistID] = {}
-            for mediaName,mediaData in artistData.media.media.items():
-                albumURLs  = {mediaValues.code: mediaValues.url for mediaValues in mediaData}
-                albumNames = {mediaValues.code: mediaValues.album for mediaValues in mediaData}
-                artistIDMetadata[artistID][mediaName] = [albumNames, albumURLs]      
-        
-        savename = self.disc.getArtistsDBModValAlbumsMetadataFilename(modVal)
-        print("Saving {0} new artist IDs name data to {1}".format(len(artistIDMetadata), savename))
-        saveFile(idata=Series(artistIDMetadata), ifile=savename, debug=False)
-        ts.stop()

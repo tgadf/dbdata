@@ -1,6 +1,5 @@
 from ioUtils import getFile
-from fsUtils import isFile
-from fileInfo import fileInfo
+from fsUtils import isFile, fileUtil, dirUtil
 from fileIO import fileIO
 from webUtils import getHTML, isBS4, isBS4Tag
 
@@ -186,7 +185,7 @@ class artistDBURLInfo:
 class artistDBFileInfoClass:
     def __init__(self, info, err=None):
         self.called = datetime.now()
-        if isinstance(info, fileInfo):
+        if isinstance(info, fileUtil):
             self.created  = info.created
             self.filename = info.ifile
         else:
@@ -264,7 +263,7 @@ class artistDBBase:
 
         
     def getDataBase(self, inputdata):
-        if fileInfo(inputdata).isfile:
+        if fileUtil(inputdata).isFile():
             ioData = fileIO().get(inputdata)
             if isinstance(ioData, artistDBDataClass):
                 self.dbdata = ioData
@@ -273,7 +272,13 @@ class artistDBBase:
                 try:
                     self.bsdata = getHTML(ioData)
                 except:
-                    raise ValueError("Cannot read artist file: {0}".format(inputdata))
+                    raise ValueError("Cannot read artist [str] file: {0}".format(inputdata))
+                return
+            elif isinstance(ioData, bytes):
+                try:
+                    self.bsdata = getHTML(ioData)
+                except:
+                    raise ValueError("Cannot read artist [bytes] file: {0}".format(inputdata))
                 return
             elif isBS4(ioData):
                 self.bsdata = ioData
@@ -284,30 +289,3 @@ class artistDBBase:
             raise ValueError("Not sure about input type: {0}".format(type(inputdata)))
 
         return
-            
-        """ 
-                #if isFile(inputdata):
-                self.bsfile = inputdata
-                self.fInfo  = fileInfo(self.bsfile)
-                try:
-                    bsdata = getHTML(getFile(inputdata))
-                except:
-                    try:
-                        bsdata = getHTML(getFile(inputdata, version=2))
-                    except:
-                        raise ValueError("Cannot read artist file: {0}".format(inputdata))
-            else:
-                try:
-                    bsdata = getHTML(inputdata)
-                except:
-                    raise ValueError("Not sure about string input: {0} . It is not a file".format(inputdata))
-        elif isBS4(inputdata):
-            bsdata = inputdata
-            pass
-        else:
-            raise ValueError("Not sure about input type: {0}".format(type(inputdata)))
-
-        self.bsdata = bsdata
-        
-        #return self.parse()
-        """

@@ -22,6 +22,8 @@ class artistKWorbiTunes(artistDBBase):
     def getData(self, inputdata):
         self.getDataBase(inputdata)
         self.checkData()
+        if self.dbdata is not None:
+            return self.dbdata
         self.inputdata = inputdata
         
         artist      = self.getName()
