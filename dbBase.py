@@ -235,55 +235,6 @@ class dbBase():
             return self.metadirnames[key]
         else:
             raise ValueError("Base is illegal: {0}".format(self.base))
-
-    """
-    def getAlbumsMetadataDBDir(self, debug=False):
-        key = "albums-{0}-db/metadata".format(self.base)
-        if self.metadirnames.get(key) is not None:
-            return self.metadirnames[key]
-        else:
-            raise ValueError("Base is illegal: {0}".format(self.base))
-    
-    def getAlbumsDBFiles(self, debug=False):
-        dbfiles = findExt(self.getAlbumsDBDir(), "*-DB.p")
-        return dbfiles
-    
-    def getAlbumsMetadataFiles(self, debug=False):
-        dbfiles = findExt(self.getAlbumsMetadataDBDir(), "*-AlbumMetadata.p")
-        return dbfiles
-    
-    def getAlbumsArtistMetadataFiles(self, debug=False):
-        dbfiles = findExt(self.getAlbumsMetadataDBDir(), "*-ArtistMetadata.p")
-        return dbfiles
-    
-    def getAlbumsDBModValFilename(self, modVal):
-        dbfile = setFile(self.getAlbumsDBDir(), "{0}-DB.p".format(modVal))
-        return dbfile
-    
-    def getAlbumsDBModValData(self, modVal):
-        dbfile = self.getAlbumsDBModValFilename(modVal)
-        if not isFile(dbfile):
-            raise ValueError("{0} does not exist".format(dbfile))
-        dbdata = getFile(dbfile)
-        return dbdata
-    """
-
-    ###############################################################################
-    ##
-    ## Discog Special/Search Directories
-    ##
-    ###############################################################################
-    def getSearchDir(self, debug=False):
-        return self.dirnames["search"]
-
-    def getSearchArtistsDir(self, debug=False):
-        return self.dirnames["search-artists"]
-
-    def getSpecialDir(self, debug=False):
-        return self.dirnames["special"]
-
-    def getArtistsSpecialDir(self, debug=False):
-        return self.dirnames["artist-special"]
     
     
     ##################################  Helper ######################################
@@ -332,8 +283,7 @@ class dbBase():
     ### Master Artist
     ###############################################################################
     def getMasterDBArtistFilename(self, debug=False):
-        savename = self.getDBData("DB", "MasterArtist", returnName=True)
-        return savename
+        return self.getDBData("DB", "MasterArtist", returnName=True)
         
     def getMasterDBArtistDataFrame(self, debug=False):
         return self.getDBData("DB", "MasterArtist")
@@ -349,11 +299,13 @@ class dbBase():
     ### Master Artist Albums
     ############################################################################### 
     def getMasterDBArtistAlbumsFilename(self, debug=False):
-        savename = self.getDBData("DB", "MasterArtistAlbums", returnName=True)
-        return savename
+        return self.getDBData("DB", "MasterArtistAlbums", returnName=True)
 
     def getMasterDBArtistIDToAlbumsData(self, debug=False):
         return self.getDBData("", "MasterArtistIDToAlbums")
+
+    def getMasterDBArtistIDToNumAlbumsData(self, debug=False):
+        return self.getDBData("", "MasterArtistIDToNumAlbums")
         
     def getMasterDBArtistAlbumsDataFrame(self, debug=False):
         return self.getDBData("DB", "MasterArtistAlbums")
@@ -369,33 +321,24 @@ class dbBase():
     
     def getArtistIDToPreMergeRefData(self, debug=False):
         return self.getDBData("IDToRefPreMerge", "Artist", debug=debug)
+
+    def getArtistIDToPreMergeNumAlbumsData(self, debug=False):
+        return self.getDBData("IDToNumAlbumsPreMerge", "Artist", debug=debug)
     
     def getArtistIDToNameData(self, debug=False):
         return self.getDBData("IDToName", "Artist", debug=debug)
     
     def getArtistNameToIDData(self, debug=False):
-        return self.flip(self.getArtistIDToNameData())
+        return self.getDBData("NameToID", "Artist", debug=debug)
         
     def getArtistIDToRefData(self, debug=False):
         return self.getDBData("IDToRef", "Artist", debug=debug)
-        
-    def getArtistIDToVariationsData(self, debug=False):
-        return self.getDBData("IDToVariations", "Artist", debug=debug)
 
     def getArtistIDToAlbumNamesData(self, debug=False):
         return self.getDBData("IDToAlbumNames", "Artist", debug=debug)
 
     def getArtistIDToAlbumRefsData(self, debug=False):
         return self.getDBData("IDToAlbumRefs", "Artist", debug=debug)
-        
-    def getArtistIDToGenreData(self, debug=False):
-        return self.getDBData("IDToGenre", "Artist", debug=debug)
-        
-    def getArtistIDToStyleData(self, debug=False):
-        return self.getDBData("IDToStyle", "Artist", debug=debug)
-        
-    def getArtistIDToCollaborationData(self, debug=False):
-        return self.getDBData("IDToCollaborations", "Artist", debug=debug)
     
     
     ###############################################################################
