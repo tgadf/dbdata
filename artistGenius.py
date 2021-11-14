@@ -4,6 +4,7 @@ from artistDBBase import artistDBProfileClass, artistDBMediaClass, artistDBMedia
 from artistDBBase import artistDBMediaDataClass, artistDBMediaCountsClass, artistDBFileInfoClass
 from artistDBBase import artistDBTextClass, artistDBLinkClass, artistDBTagClass
 from strUtils import fixName
+import regex
 import json
 from dbUtils import utilsGenius
 from hashlib import md5
@@ -50,6 +51,55 @@ class artistGenius(artistDBBase):
     ##############################################################################################################################
     ## Artist Name
     ##############################################################################################################################
+    def isLatin(self, value):
+        if regex.search(r'\p{IsLatin}', value):
+            return True
+        return False
+    
+    def getKorean(self, value):
+        return regex.compile(r"\s\([\p{IsHangul}]+\)").search(value)
+    def getThai(self, value):
+        return regex.compile(r"\s\([\p{IsThai}]+\)").search(value)
+    def getHebrew(self, value):
+        return regex.compile(r"\s\([\p{IsHebrew}]+\)").search(value)
+    def getRussian(self, value):
+        return regex.compile(r"\s\([\p{IsCyrillic}]+\)").search(value)
+    def getJapanChina(self, value):
+        return regex.compile(r"\s\([\p{IsHan}\p{IsBopo}\p{IsHira}\p{IsKatakana}]+\)").search(value)
+    
+    
+    def splitNativeName(self, artistName):
+        names = artistName.split()
+        ## Rough syntax for non-Latin name with Latin name in ()
+        if not self.isLatin(names[0]) and names[-1].endswith(")"):
+            native = []
+            latin  = []
+            for i,name in enumerate(names):
+                if name.startswith("("):
+                    for latinname in names[i:]:
+                        latin.append(latinname.replace("(", "").replace(")", ""))
+                    break
+                native.append(name)
+
+            native = " ".join(native)
+            latin  = " ".join(latin)
+            return latin,native
+        elif self.isLatin(names[0]) and names[-1].endswith(")"):
+            for getlang in [self.getKorean, self.getThai, self.getJapanChina, self.getRussian, self.getHebrew]:
+                result = getlang(artistName)
+                if result is not None:
+                    span   = result.span()
+                    latin  = artistName[:span[0]]
+                    native = artistName[(span[0]+2):(span[1]-1)]
+                    return latin,native
+                
+            for key in ['GRC', 'band', 'FRA', 'Producer', 'Band', 'Russia', 'rapper', 'QC', 'Rapper', 'DEU', 'DNK', 'RUS', 'PRT', 'UK', 'Rap', 'KOR', 'HRV', 'RU', 'SA', 'GR', 'BLR', 'BEL', 'ARG', 'SWE', 'Rock', 'producer', 'Electronic', 'BE', 'CAN', 'Canada', 'rap', 'POL', 'Musical artist', 'UKR', 'FR', 'CA', 'trumpeter', 'Gospel Singer-Songwriter', 'grunge', 'US', 'psytrance', 'NOR', 'USA', 'FI', 'JP', 'Hip-Hop', 'DJ', 'IRL', 'DE', 'Sweden', 'group', 'KC', 'Pop', 'Aus', 'Thai Artist', 'dancehall reggae', 'Group', 'vocal group', 'BRA', 'BGR', 'PL', 'MAR', 'Producers', 'Prod']:
+                if artistName.endswith(" ({0})".format(key)):
+                    artistName = artistName.replace(" ({0})".format(key), "")
+            return artistName,None
+        else:
+            return artistName,None
+            
     def getName(self):
         jdata = None
         for meta in self.bsdata.findAll("meta"):
@@ -72,7 +122,8 @@ class artistGenius(artistDBBase):
             anc = artistDBNameClass(name=None, err = "NoJSON")
             return anc
         
-        anc = artistDBNameClass(name=artistName, err=None)
+        latinName,nativeName = self.splitNativeName(artistName)
+        anc = artistDBNameClass(name=latinName, native=nativeName, err=None)
         return anc
 
     

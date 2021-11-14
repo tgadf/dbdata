@@ -224,7 +224,7 @@ class dbArtistsBase:
     def getArtistPrimaryFiles(self, modVal, expr, force=False):
         ffd   = filesFromDir(ext=".p")
         files = ffd.getFiles(self.getModValDir(modVal))
-        fname = self.disc.getArtistsDBModValFilename(modVal)
+        fname = self.disc.getDBModValFilename(modVal)
         newFiles = files if force is True else self.getFilesByLastMod(files, expr, fname)
         return newFiles
         

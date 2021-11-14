@@ -4,12 +4,15 @@ from os import getcwd
 from dbUtils import discogsUtils
 from fsUtils import moveFile, moveDir, fileUtil
 from fileUtils import getFileBasics, getBasename, getDirname
-from fileIO import fileIO
 from searchUtils import findExt, findPattern
 from glob import glob
 from os.path import join
 from time import sleep
 from collections import Counter
+
+from fileIO import fileIO
+from fsUtils import dirUtil, fileUtil, fsPath
+
 
 
 class dbBase():
@@ -23,6 +26,7 @@ class dbBase():
         self.rawsavepath  = setDir("/Volumes/Piggy", "Discog", forceExist=False)
                 
         self.maxModVal  = 100
+        self.io = fileIO()
                 
         self.createDirectories()
         
@@ -54,7 +58,10 @@ class dbBase():
         for name, dirname in localdirnames.items():
             if not isDir(dirname):
                 print("Creating {0}".format(dirname))
-                mkDir(dirname, debug=True)
+                try:
+                    mkDir(dirname, debug=True)
+                except:
+                    print("Cannot create {0}".format(dirname))
             else:
                 if self.debug:
                     print("{0} exists".format(dirname))
@@ -146,6 +153,23 @@ class dbBase():
             raise ValueError("Base is illegal: {0}".format(self.base))
 
 
+    ####################################################################################################################
+    # Syntax
+    ####################################################################################################################
+    def getDBData(self, dbname, prefix, returnName=False, debug=False):
+        savename = setFile(self.getDiscogDBDir(), "{0}{1}.p".format(prefix, dbname))
+        if self.debug is True:
+            print("Data stored in {0}".format(savename))
+        if returnName is True:
+            return savename
+        if not isFile(savename):
+            raise ValueError("Could not find {0}".format(savename))
+           
+        if self.debug:
+            print("Returning data from {0}".format(savename))
+        data = getFile(savename, debug=debug)
+        return data
+
     ###############################################################################
     ##
     ## Artist Directories
@@ -172,49 +196,90 @@ class dbBase():
         else:
             raise ValueError("Base is illegal: {0}".format(self.base))
     
-    def getArtistsMetadataDBDir(self, debug=False):
+    
+    ####################################################################################################################
+    ## DB Raw Files
+    ####################################################################################################################
+    def getRawFilename(self, dbID):
+        artistDir = self.getArtistsDir()
+        modVal = str(int(dbID) % self.maxModVal)
+        modDir = fsPath(self.getArtistsDir()).join(modVal)
+        return fsPath(modDir).join("{0}.p".format(dbID))
+    def getRawData(self, dbID):
+        return self.io.get(self.getRawFilename(dbID))
+
+    
+    ####################################################################################################################
+    ## DB ModVal Data
+    ####################################################################################################################
+    def getDBModValFilename(self, modVal):
+        return fsPath(self.getArtistsDBDir()).join("{0}-DB.p".format(modVal))
+    def getDBModValData(self, modVal):
+        return self.io.get(self.getDBModValFilename(modVal))
+    def saveDBModValData(self, idata, modVal):
+        self.io.save(idata=idata, ifile=self.getDBModValFilename(modVal))
+    
+    
+    ####################################################################################################################
+    ## Metadata
+    ####################################################################################################################
+    def getMetadataDir(self, debug=False):
         key = "artists-{0}-db/metadata".format(self.base)
         if self.metadirnames.get(key) is not None:
             return self.metadirnames[key]
         else:
             raise ValueError("Base is illegal: {0}".format(self.base))
     
-    def getArtistsDBFiles(self, debug=False):
-        dbfiles = findExt(self.getArtistsDBDir(), "*-DB.p")
-        return dbfiles
-    
-    def getArtistsDBModValFilename(self, modVal):
-        dbfile = setFile(self.getArtistsDBDir(), "{0}-DB.p".format(modVal))
-        return dbfile
-    
-    def getArtistsDBModValData(self, modVal):
-        io     = fileIO()
-        ifile  = self.getArtistsDBModValFilename(modVal)
-        return fileIO().get(ifile) if fileUtil(ifile).exists else None
-    
-    def saveArtistsDBModValData(self, modVal, dbdata):
-        dbfile = self.getArtistsDBModValFilename(modVal)
-        if not isFile(dbfile):
-            raise ValueError("{0} does not exist".format(dbfile))
-        print("Saving {0} artists to {1}... ".format(len(dbdata), dbfile), end="")
-        saveFile(idata=dbdata, ifile=dbfile)
-        print("Done.")
+    def getMetadataArtistFilename(self, modVal):
+        return fsPath(self.getMetadataDir()).join("{0}-Metadata.p".format(modVal))
+    def getMetadataArtistData(self, modVal):
+        return self.io.get(self.getMetadataArtistFilename(modVal))
+    def saveMetadataArtistData(self, idata, modVal):
+        self.io.save(idata=idata, ifile=self.getMetadataArtistFilename(modVal))
+        
+    def getMetadataAlbumFilename(self, modVal):
+        return fsPath(self.getMetadataDir()).join("{0}-MediaMetadata.p".format(modVal))        
+    def getMetadataAlbumData(self, modVal):
+        return self.io.get(self.getMetadataAlbumFilename(modVal))
+    def saveMetadataAlbumData(self, idata, modVal):
+        self.io.save(idata=idata, ifile=self.getMetadataAlbumFilename(modVal))
 
 
-    ###############################################################################
-    ##
-    ## Artist Metadata Directories
-    ##
-    ###############################################################################    
-    def getArtistsDBModValMetadataFilename(self, modVal):
-        dirVal = self.getArtistsMetadataDBDir()
-        dbfile = setFile(dirVal, "{0}-Metadata.p".format(modVal))
-        return dbfile
-  
-    def getArtistsDBModValAlbumsMetadataFilename(self, modVal):
-        dirVal = self.getArtistsMetadataDBDir()
-        dbfile = setFile(dirVal, "{0}-MediaMetadata.p".format(modVal))
-        return dbfile
+    ####################################################################################################################
+    ## Basic Lookup Data
+    ####################################################################################################################
+    def getArtistIDToNameFilename(self, suffix=""):
+        return fsPath(self.getDiscogDBDir()).join("{0}{1}{2}.p".format("Artist", "IDToName", suffix))    
+    def getArtistIDToNameData(self, suffix=""):
+        return self.io.get(self.getArtistIDToNameFilename(suffix))
+    def saveArtistIDToNameData(self, idata, suffix=""):
+        self.io.save(idata=idata, ifile=self.getArtistIDToNameFilename(suffix))
+    
+    def getArtistIDToRefFilename(self, suffix=""):
+        return fsPath(self.getDiscogDBDir()).join("{0}{1}{2}.p".format("Artist", "IDToRef", suffix))    
+    def getArtistIDToRefData(self, suffix=""):
+        return self.io.get(self.getArtistIDToRefFilename(suffix))
+    def saveArtistIDToRefData(self, idata, suffix=""):
+        self.io.save(idata=idata, ifile=self.getArtistIDToRefFilename(suffix))
+    
+    def getArtistIDToNumAlbumsFilename(self, suffix=""):
+        return fsPath(self.getDiscogDBDir()).join("{0}{1}{2}.p".format("Artist", "IDToNumAlbums", suffix))
+    def getArtistIDToNumAlbumsData(self, suffix=""):
+        return self.io.get(self.getArtistIDToNumAlbumsFilename(suffix))
+    def saveArtistIDToNumAlbumsData(self, idata, suffix=""):
+        self.io.save(idata=idata, ifile=self.getArtistIDToNumAlbumsFilename(suffix))
+    
+    def getArtistIDToAlbumNamesFilename(self, suffix=""):
+        return fsPath(self.getDiscogDBDir()).join("{0}{1}{2}.p".format("Artist", "IDToAlbumNames", suffix))
+    def getArtistIDToAlbumNamesData(self, suffix=""):
+        return self.io.get(self.getArtistIDToAlbumNamesFilename(suffix))
+    def saveArtistIDToAlbumNamesData(self, idata, suffix=""):
+        self.io.save(idata=idata, ifile=self.getArtistIDToAlbumNamesFilename(suffix))
+    
+
+
+    
+    
 
 
     ###############################################################################
@@ -253,24 +318,6 @@ class dbBase():
     def saveDiagnosticAlbumIDs(self, albumIDs):
         savename = setFile(self.getDiagnosticDir(), "albumKnownIDs.p")
         saveFile(ifile=savename, idata=albumIDs)
-
-
-    ###############################################################################
-    # Discog DB Names
-    ###############################################################################
-    def getDBData(self, dbname, prefix, returnName=False, debug=False):
-        savename = setFile(self.getDiscogDBDir(), "{0}{1}.p".format(prefix, dbname))
-        if self.debug is True:
-            print("Data stored in {0}".format(savename))
-        if returnName is True:
-            return savename
-        if not isFile(savename):
-            raise ValueError("Could not find {0}".format(savename))
-           
-        if self.debug:
-            print("Returning data from {0}".format(savename))
-        data = getFile(savename, debug=debug)
-        return data
     
     
     ###############################################################################

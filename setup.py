@@ -9,7 +9,7 @@ from setuptools.command.install import install
 setup(
   name = 'dbdata',
   py_modules = [
-      'artistDBBase', 'artistIDBase', 'dbArtistsBase', 'dbBase', 'dbUtils', 'dbArtistID', "dbArtistsMetadata",
+      'artistDBBase', 'artistIDBase', 'dbArtistsBase', 'dbBase', 'dbUtils', 'dbArtistsID', "dbArtistsMetadata",
       'dbArtistsParse', 'dbArtistsParseExtra', 'dbArtistsParseCredit', 'dbArtistsParseSong', 'dbArtistsParseUnofficial',
       'artistAllMusic', 'dbArtistsAllMusic', 
       'artistDiscogs', 'dbArtistsDiscogs', 

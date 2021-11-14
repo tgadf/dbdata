@@ -52,19 +52,25 @@ class artistAlbumOfTheYear(artistDBBase):
     ## Artist Name
     ###########################################################################################################################
     def getName(self):
-        script = self.bsdata.find("script", {"type": "application/ld+json"})
-        if script is None:
-            anc = artistDBNameClass(name=None, err = "NoJSON")
+        h1 = self.bsdata.find("h1", {"class": 'artistHeadline'})
+        artistName = h1.text if h1 is not None else None
+        if artistName is not None:
+            anc = artistDBNameClass(name=artistName, err=None)
             return anc
-            
-        try:
-            artist = json.loads(script.contents[0])["name"]
-        except:
-            anc = artistDBNameClass(name=None, err = "CouldNotCompileJSON")
+        else:
+            script = self.bsdata.find("script", {"type": "application/ld+json"})
+            if script is None:
+                anc = artistDBNameClass(name=None, err = "NoJSON")
+                return anc
+
+            try:
+                artist = json.loads(script.contents[0])["name"]
+            except:
+                anc = artistDBNameClass(name=None, err = "CouldNotCompileJSON")
+                return anc
+
+            anc = artistDBNameClass(name=artist, err=None)
             return anc
-            
-        anc = artistDBNameClass(name=artist, err=None)
-        return anc
 
     
 

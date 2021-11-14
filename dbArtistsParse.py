@@ -35,13 +35,13 @@ class dbArtistsPrimary(dbArtistsBase):
         
         modValue = max([250 * round((N/10)/250), 250])
 
-        if force is True or not fileUtil(self.disc.getArtistsDBModValFilename(modVal)).exists:
+        if force is True or not fileUtil(self.disc.getDBModValFilename(modVal)).exists:
             tsDB = timestat("Creating New DB For ModVal={0}".format(modVal))
             dbdata = {}
             ts.stop()
         else:
             tsDB = timestat("Loading ModVal={0} DB Data".format(modVal))
-            dbdata = self.getDBData(modVal, force)
+            dbdata = self.getDBModValData(modVal)
             tsDB.stop()
             
         newData  = 0
@@ -65,7 +65,8 @@ class dbArtistsPrimary(dbArtistsBase):
         tsParse.stop()
             
         if newData > 0:
-            self.saveDBData(modVal, dbdata, newData)
+            print("Saving [{0}/{1}] {2} Entries To {3}".format(newData, len(dbdata), "ID Data", self.disc.getDBModValFilename(modVal)))
+            self.disc.saveDBModValData(modVal=modVal, idata=dbdata)
         
         ts.stop()
         
@@ -123,6 +124,7 @@ class dbArtistsPickleHTML(dbArtistsBase):
         
         N = len(newFiles)
         modValue = 250 if N >= 500 else 50
+        nSave = 0
         tsParse = timestat("Parsing {0} Raw Picked HTML Files".format(N))
         for i,ifile in enumerate(newFiles):
             if (i+1) % modValue == 0 or (i+1) == N or debug:
@@ -133,6 +135,7 @@ class dbArtistsPickleHTML(dbArtistsBase):
             print(ifile,'\t',artistID,'\t',savename)
             if isinstance(savename,str) and not fileUtil(savename).exists:
                 io.save(idata=retval, ifile=savename)
+                nSave += 1
                 
         ts.stop()
         print("Saved {0} New Files".format(nSave))
