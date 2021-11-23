@@ -41,7 +41,7 @@ class dbArtistsPrimary(dbArtistsBase):
             ts.stop()
         else:
             tsDB = timestat("Loading ModVal={0} DB Data".format(modVal))
-            dbdata = self.getDBModValData(modVal)
+            dbdata = self.disc.getDBModValData(modVal)
             tsDB.stop()
             
         newData  = 0
