@@ -1,8 +1,8 @@
 from dbArtistsBase import dbArtistsBase
 from fsUtils import isFile
+
 from fileUtils import getBaseFilename
 from timeUtils import timestat
-from ioUtils import saveFile
 from time import sleep
 import urllib
 from webUtils import getHTML
@@ -45,7 +45,7 @@ class dbArtistsAssertCredit(dbArtistsBase):
             tsIgnore.stop()
             
             tsDBData = timestat("Finding Known Artists From {0} Primary/Good Files For ModVal={1}".format(len(modValPrimaryGoodFiles), modVal))
-            dbData = self.getDBData(modVal)
+            dbData = self.disc.getDBModValData(modVal)
             missingArtistIDFiles = [ifile for ifile in modValPrimaryFiles if dbData.get(getBaseFilename(ifile)) is None]
             tsDBData.stop()
             

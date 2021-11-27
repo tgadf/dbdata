@@ -131,28 +131,6 @@ class dbBase():
             raise ValueError("Base is illegal: {0}".format(self.base))
 
 
-    ###############################################################################
-    # Discog Collection Directories
-    ###############################################################################
-    def getCollectionsDir(self, debug=False):
-        key = "collections-{0}-db".format(self.base)
-        if self.dirnames.get(key) is not None:
-            return self.dirnames[key]
-        else:
-            raise ValueError("Base is illegal: {0}".format(self.base))
-
-
-    ###############################################################################
-    # Discog Diagnostic Directories
-    ###############################################################################
-    def getDiagnosticDir(self, debug=False):
-        key = "diagnostic-{0}".format(self.base)
-        if self.dbdirnames.get(key) is not None:
-            return self.dbdirnames[key]
-        else:
-            raise ValueError("Base is illegal: {0}".format(self.base))
-
-
     ####################################################################################################################
     # Syntax
     ####################################################################################################################
