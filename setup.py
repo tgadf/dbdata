@@ -17,8 +17,7 @@ class PostInstallCommand(install):
     
 setup(
   name = 'dbdata',
-  py_modules = [
-      'artistDBBase', 'artistIDBase', 'dbArtistsBase', 'dbBase', 'dbUtils', 'dbArtistsID', "dbArtistsMetadata",
+  py_modules = ['artistDBBase', 'artistIDBase', 'dbArtistsBase', 'dbBase', 'dbUtils', 'dbArtistsID', "dbArtistsMetadata",
       'dbArtistsParse', 'dbArtistsParseExtra', 'dbArtistsParseCredit', 'dbArtistsParseSong', 'dbArtistsParseUnofficial',
       'artistAllMusic', 'dbArtistsAllMusic', 
       'artistDiscogs', 'dbArtistsDiscogs', 
@@ -26,19 +25,11 @@ setup(
       'artistDeezer', 'dbArtistsDeezer', 
       'artistLastFM', 'dbArtistsLastFM', 
       'artistRateYourMusic', 'dbArtistsRateYourMusic',
-      'artistRockCorner', 'dbArtistsRockCorner',
       'artistAlbumOfTheYear', 'dbArtistsAlbumOfTheYear',
-      'artistIHeart', 'dbArtistsIHeart',
-      'artistGenius', 'dbArtistsGenius',
       'artistKWorbSpotify', 'dbArtistsKWorbSpotify',
-      'artistKWorbYouTube', 'dbArtistsKWorbYouTube',
-      'artistKWorbiTunes',  'dbArtistsKWorbiTunes',
-      'artistAB', 'dbArtistsAceBootlegs', 
-      'artistCL', 'dbArtistsCDandLP', 
-      'artistDP', 'dbArtistsDatPiff', 
-      'artistMD', 'dbArtistsMusicStack'],
+      'artistKWorbiTunes',  'dbArtistsKWorbiTunes'],
   version = '0.0.1',
-  cmdclass={'install': PostInstallCommand},
+  #cmdclass={'install': PostInstallCommand},
   data_files = [],
   description = 'A Python Wrapper for Music DB Data',
   long_description = open('README.md').read(),
@@ -55,7 +46,7 @@ setup(
     'Topic :: Software Development :: Libraries :: Python Modules',
     'Topic :: Utilities'
   ],
-  install_requires=['jupyter_contrib_nbextensions'],
-  dependency_links=['git+ssh://git@github.com/tgadf/utils.git#egg=utils-0.0.1', 'git+ssh://git@github.com/tgadf/multiartist.git#egg=multiartist-0.0.1', 'git+ssh://git@github.com/tgadf/musicdb.git#egg=musicdb-0.0.1']
+  install_requires=['jupyter_contrib_nbextensions', 'python-Levenshtein', 'thefuzz', 'strsimpy', 'tqdm'],
+  dependency_links=['git+ssh://git@github.com/tgadf/utils.git#egg=utils-0.0.1', 'git+ssh://git@github.com/tgadf/dbdata.git#egg=dbdata-0.0.1', 'git+ssh://git@github.com/tgadf/multiartist.git#egg=multiartist-0.0.1', 'git+ssh://git@github.com/tgadf/musicdb.git#egg=musicdb-0.0.1']
 )
  

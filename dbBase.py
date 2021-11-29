@@ -253,6 +253,31 @@ class dbBase():
         return self.io.get(self.getArtistIDToAlbumNamesFilename(suffix))
     def saveArtistIDToAlbumNamesData(self, idata, suffix=""):
         self.io.save(idata=idata, ifile=self.getArtistIDToAlbumNamesFilename(suffix))
+
+
+    ####################################################################################################################
+    ## Search Lookup Data (Translation + >=2 Albums
+    ####################################################################################################################
+    def getArtistIDToSearchNameFilename(self, suffix=""):
+        return fsPath(self.getDiscogDBDir()).join("{0}{1}{2}.p".format("Artist", "IDToSearchName", suffix))    
+    def getArtistIDToSearchNameData(self, suffix=""):
+        return self.io.get(self.getArtistIDToSearchNameFilename(suffix))
+    def saveArtistIDToSearchNameData(self, idata, suffix=""):
+        self.io.save(idata=idata, ifile=self.getArtistIDToSearchNameFilename(suffix))
+    
+    def getArtistIDToSearchNumAlbumsFilename(self, suffix=""):
+        return fsPath(self.getDiscogDBDir()).join("{0}{1}{2}.p".format("Artist", "IDToSearchNumAlbums", suffix))
+    def getArtistIDToSearchNumAlbumsData(self, suffix=""):
+        return self.io.get(self.getArtistIDToSearchNumAlbumsFilename(suffix))
+    def saveArtistIDToSearchNumAlbumsData(self, idata, suffix=""):
+        self.io.save(idata=idata, ifile=self.getArtistIDToSearchNumAlbumsFilename(suffix))
+    
+    def getArtistIDToSearchAlbumNamesFilename(self, suffix=""):
+        return fsPath(self.getDiscogDBDir()).join("{0}{1}{2}.p".format("Artist", "IDToSearchAlbumNames", suffix))
+    def getArtistIDToSearchAlbumNamesData(self, suffix=""):
+        return self.io.get(self.getArtistIDToSearchAlbumNamesFilename(suffix))
+    def saveArtistIDToSearchAlbumNamesData(self, idata, suffix=""):
+        self.io.save(idata=idata, ifile=self.getArtistIDToSearchAlbumNamesFilename(suffix))
     
 
 
