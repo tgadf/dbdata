@@ -112,7 +112,7 @@ class dbArtistsCredit(dbArtistsBase):
         modValue = 500 if N >= 1000 else 100
         if N > 0:
             tsDB = timestat("Loading ModVal={0} DB Data".format(modVal))
-            dbdata   = self.getDBData(modVal, force)
+            dbdata   = self.disc.getDBModValData(modVal) ## We do not want to overwrite other data
             tsDB.stop()
             
         newData  = 0
@@ -147,6 +147,7 @@ class dbArtistsCredit(dbArtistsBase):
             newData += 1
             
         if newData > 0:
-            self.saveDBData(modVal, dbdata, newData)
+            print("Saving {0} New Entries".format(newData))
+            self.disc.saveDBModValData(idata=dbdata, modVal=modVal) ## We do not want to overwrite other data
             
         tsParse.stop()

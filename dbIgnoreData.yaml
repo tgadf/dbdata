@@ -1,6 +1,5 @@
 AlbumOfTheYear:
   Name:
-  - ''
   - Unknown Artist
 AllMusic:
   Credit:
@@ -4943,9 +4942,15 @@ Discogs:
 Genius:
   Name: []
 KWorbSpotify:
-  Name: []
+  Name:
+  - 群星
+  - Various Artists
+  - Stars
 KWorbiTunes:
-  Name: []
+  Name:
+  - 群星
+  - Various Artists
+  - Stars
 LastFM:
   Name:
   - Rain Sounds
@@ -5233,7 +5238,9 @@ MusicBrainz:
   - Geovanni
   - '[unknown]'
 RateYourMusic:
-  Name: []
+  Name:
+  - Traditional
+  - Various Artists
   Primary:
   - https://rateyourmusic.com/artist/caleb_r_k_williams
   - https://rateyourmusic.com/artist/8_bit_misfits

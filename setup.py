@@ -18,7 +18,7 @@ class PostInstallCommand(install):
 setup(
   name = 'dbdata',
   py_modules = ['artistDBBase', 'artistIDBase', 'dbArtistsBase', 'dbBase', 'dbUtils', 'dbArtistsID', "dbArtistsMetadata",
-      'dbArtistsParse', 'dbArtistsParseExtra', 'dbArtistsParseCredit', 'dbArtistsParseSong', 'dbArtistsParseUnofficial',
+      'dbArtistsParse', 'dbArtistsParseExtra', 'dbArtistsParseCredit', 'dbArtistsParseSong', 'dbArtistsParseComposition', 'dbArtistsParseUnofficial',
       'artistAllMusic', 'dbArtistsAllMusic', 
       'artistDiscogs', 'dbArtistsDiscogs', 
       'artistMusicBrainz', 'dbArtistsMusicBrainz', 
@@ -27,7 +27,8 @@ setup(
       'artistRateYourMusic', 'dbArtistsRateYourMusic',
       'artistAlbumOfTheYear', 'dbArtistsAlbumOfTheYear',
       'artistKWorbSpotify', 'dbArtistsKWorbSpotify',
-      'artistKWorbiTunes',  'dbArtistsKWorbiTunes'],
+      'artistKWorbiTunes',  'dbArtistsKWorbiTunes',
+      'artistDatPiff',  'dbArtistsDatPiff'],
   version = '0.0.1',
   #cmdclass={'install': PostInstallCommand},
   data_files = [],

@@ -90,6 +90,7 @@ class dbArtistsHTML(dbArtistsBase):
         
         N = len(newFiles)
         modValue = 250 if N >= 500 else 50
+        modValue = 500 if N >= 2000 else modValue
         nSave = 0
         tsParse = timestat("Parsing {0} Raw HTML Files".format(N))
         for i,ifile in enumerate(newFiles):
@@ -99,7 +100,7 @@ class dbArtistsHTML(dbArtistsBase):
             retval   = self.artist.getData(ifile)
             artistID = retval.ID.ID
             savename = self.dutils.getArtistSavename(artistID)
-            if isinstance(savename,str) and not fileUtil(savename).exists:                
+            if isinstance(savename,str) and (force == True or fileUtil(savename).exists == False):
                 io.save(idata=retval, ifile=savename)
                 nSave += 1
                 
@@ -133,7 +134,7 @@ class dbArtistsPickleHTML(dbArtistsBase):
             artistID = retval.ID.ID
             savename = self.dutils.getArtistSavename(artistID)
             print(ifile,'\t',artistID,'\t',savename)
-            if isinstance(savename,str) and not fileUtil(savename).exists:
+            if isinstance(savename,str) and (force == True or fileUtil(savename).exists == False):
                 io.save(idata=retval, ifile=savename)
                 nSave += 1
                 

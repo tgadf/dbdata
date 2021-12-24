@@ -173,15 +173,37 @@ class artistRateYourMusic(artistDBBase):
     
     def getProfile(self):
         profile = self.bsdata.find("div", {"class": "artist_info"})
+        if profile is None:
+            apc = artistDBProfileClass(err="NoInfo")
+            return apc
+        
         headers = profile.findAll("div", {"class": "info_hdr"})
         headers = [header.text for header in headers]
         content = profile.findAll("div", {"class": "info_content"})
         profileData = dict(zip(headers, content))
 
-        generalData = {}
-        extraData   = None
-        genreData   = None
+        generalData  = {}
+        extraData    = None
+        genreData    = None
+        externalData = None
+        
+        rymList = self.bsdata.find("ul", {"class": "lists"})
+        listInfos = rymList.findAll("div", {"class": "list_info"}) if rymList is not None else []
+        userLists = []
+        for userList in listInfos:
+            listName = userList.find("div", {"class": "list_name"})
+            listUser = userList.find("div", {"class": "list_author"})
+            listRef  = listName.find("a")
+            if listRef is not None:
+                userLists.append(artistDBLinkClass(listRef))
+            continue
+            listRef  = listName.find("a") if listName is not None else None
+            listText = listRef.text if listRef is not None else None
+            listRef  = listRef.attrs['href'] if listRef is not None else None
+            userLists[listRef] = listText
+        externalData = {"Lists": userLists} if len(userLists) > 0 else None
 
+        
         if profileData.get("Formed") is not None:
             tag = profileData["Formed"]
             if tag is not None:
@@ -246,7 +268,7 @@ class artistRateYourMusic(artistDBBase):
 
         generalData = generalData if len(generalData) > 0 else None
                 
-        apc = artistDBProfileClass(general=generalData, genres=genreData, extra=extraData)
+        apc = artistDBProfileClass(general=generalData, genres=genreData, extra=extraData, external=externalData)
         return apc
     
     
@@ -275,6 +297,63 @@ class artistRateYourMusic(artistDBBase):
 
         return amac
     
+    
+    def getCreditsMedia(self, artist, url):
+        artistCredits = self.bsdata.find("div", {"class": "section_artist_credits"})
+        if artistCredits is None:
+            return {}
+
+        discInfos = artistCredits.findAll("div", {"class": "disco_release"})
+        media = {}
+        mediaType = "Credits"
+
+        for albumdata in discInfos:
+
+            ## Code
+            codedata = albumdata.attrs['id']
+            code     = codedata.split("_")[-1]
+            try:
+                int(code)
+            except:
+                code = None
+
+            ## Title
+            mainline = albumdata.find("div", {"class": "disco_mainline"})
+            maindata = self.getNamesAndURLs(mainline)
+            try:
+                album = maindata[0].name
+            except:
+                album = None
+
+            try:
+                albumurl = maindata[0].url
+            except:
+                albumurl = None
+
+
+            ## Year
+            yeardata = albumdata.find("span", {"class": "disco_year_y"})
+            if yeardata is None:
+                yeardata = albumdata.find("span", {"class": "disco_year_ymd"})
+
+            year     = None
+            if yeardata is not None:
+                year = yeardata.text
+
+            ## Artists        
+            artistdata   = albumdata.findAll("span")[-1]
+            albumartists = self.getNamesAndURLs(artistdata)
+            if len(albumartists) == 0:
+                albumartists = [artistDBURLInfo(name=artist.name, url=url.url.replace("https://rateyourmusic.com", ""), ID=None)]
+
+
+            amdc = artistDBMediaDataClass(album=album, url=album, aclass=None, aformat=None, artist=albumartists, code=code, year=year)
+            if media.get(mediaType) is None:
+                media[mediaType] = []
+            media[mediaType].append(amdc)    
+            
+        return media
+            
     
     def getClassicalMedia(self, artist, url):
         artistWorks = self.bsdata.find("div", {"class": "section_artist_works"})
@@ -400,6 +479,9 @@ class artistRateYourMusic(artistDBBase):
         classicalMedia = self.getClassicalMedia(artist, url)
         if len(classicalMedia) > 0:
             amc.media.update(classicalMedia)
+        creditsMedia = self.getCreditsMedia(artist, url)
+        if len(creditsMedia) > 0:
+            amc.media.update(creditsMedia)
 
         return amc
     

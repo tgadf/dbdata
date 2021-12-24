@@ -7,7 +7,7 @@ from hashlib import md5
 
 from dbBase import dbBase
 
-class artistDPIDClass:
+class artistDatPiffIDClass:
     def __init__(self, ID=None, err=None):
         self.ID=ID
         self.err=err
@@ -16,7 +16,7 @@ class artistDPIDClass:
         return self.__dict__
     
             
-class artistDPURLClass:
+class artistDatPiffURLClass:
     def __init__(self, url=None, err=None):
         self.url = url
         self.err = err
@@ -25,7 +25,7 @@ class artistDPURLClass:
         return self.__dict__
         
         
-class artistDPNameClass:
+class artistDatPiffNameClass:
     def __init__(self, name=None, err=None):
         self.name = name
         self.err  = err
@@ -34,7 +34,7 @@ class artistDPNameClass:
         return self.__dict__
     
 
-class artistDPMediaClass:
+class artistDatPiffMediaClass:
     def __init__(self, err=None):
         self.media = {}
         self.err   = err
@@ -43,7 +43,7 @@ class artistDPMediaClass:
         return self.__dict__
     
 
-class artistDPMediaDataClass:
+class artistDatPiffMediaDataClass:
     def __init__(self, album=None, url=None, aclass=None, aformat=None, artist=None, code=None, year=None, err=None):
         self.album   = album
         self.url     = url
@@ -58,7 +58,7 @@ class artistDPMediaDataClass:
         return self.__dict__
     
 
-class artistDPMediaAlbumClass:
+class artistDatPiffMediaAlbumClass:
     def __init__(self, url=None, album=None, aformat=None, err=None):
         self.url     = url
         self.album   = album
@@ -69,7 +69,7 @@ class artistDPMediaAlbumClass:
         return self.__dict__
 
     
-class artistDPMediaCountsClass:
+class artistDatPiffMediaCountsClass:
     def __init__(self, err=None):
         self.counts = {}
         self.err    = err
@@ -78,7 +78,7 @@ class artistDPMediaCountsClass:
         return self.__dict__
     
 
-class artistDPPageClass:
+class artistDatPiffPageClass:
     def __init__(self, ppp = None, tot = None, more=None, redo=None, err=None):
         self.ppp   = ppp
         self.tot   = tot
@@ -96,7 +96,7 @@ class artistDPPageClass:
         return self.__dict__
     
 
-class artistDPProfileClass:
+class artistDatPiffProfileClass:
     def __init__(self, profile=None, aliases=None, members=None, sites=None, groups=None, variations=None, err=None):
         self.profile    = profile
         self.aliases    = aliases
@@ -110,7 +110,7 @@ class artistDPProfileClass:
         return self.__dict__
     
 
-class artistDPURLInfo:
+class artistDatPiffURLInfo:
     def __init__(self, name=None, url=None, ID=None, err=None):
         self.name = name
         self.url  = url
@@ -121,7 +121,7 @@ class artistDPURLInfo:
         return self.__dict__
         
 
-class artistDPDataClass:
+class artistDatPiffDataClass:
     def __init__(self, artist=None, url=None, ID=None, pages=None, profile=None, media=None, mediaCounts=None, err=None):
         self.artist      = artist
         self.url         = url
@@ -137,7 +137,7 @@ class artistDPDataClass:
 
 
         
-class artistDP(dbBase):
+class artistDatPiff(dbBase):
     def __init__(self, debug=False):
         self.debug = debug
         self.data  = None
@@ -195,7 +195,7 @@ class artistDP(dbBase):
                 name   = ref.text
 
                 ID = None
-                data.append(artistDPURLInfo(name=name, url=url, ID=ID))
+                data.append(artistDatPiffURLInfo(name=name, url=url, ID=ID))
         return data
 
 
@@ -205,8 +205,8 @@ class artistDP(dbBase):
     #######################################################################################################################################
     ## Artist URL
     #######################################################################################################################################
-    def getartistDPURL(self):
-        auc = artistDPURLClass(url=None, err=None)
+    def getartistDatPiffURL(self):
+        auc = artistDatPiffURLClass(url=None, err=None)
         return auc
 
     
@@ -214,8 +214,8 @@ class artistDP(dbBase):
     #######################################################################################################################################
     ## Artist ID
     #######################################################################################################################################
-    def getartistDPDiscID(self):
-        aic = artistDPIDClass(ID=self.data["ID"], err=None)
+    def getartistDatPiffDiscID(self):
+        aic = artistDatPiffIDClass(ID=self.data["ID"], err=None)
         return aic
     
     
@@ -223,8 +223,8 @@ class artistDP(dbBase):
     #######################################################################################################################################
     ## Artist Name
     #######################################################################################################################################
-    def getartistDPName(self):
-        anc = artistDPNameClass(name=self.data["Name"], err=None)
+    def getartistDatPiffName(self):
+        anc = artistDatPiffNameClass(name=self.data["Name"], err=None)
         return anc
     
     
@@ -232,8 +232,8 @@ class artistDP(dbBase):
     #######################################################################################################################################
     ## Artist Media
     #######################################################################################################################################
-    def getartistDPMediaAlbum(self, td):
-        amac = artistDPMediaAlbumClass()
+    def getartistDatPiffMediaAlbum(self, td):
+        amac = artistDatPiffMediaAlbumClass()
         for span in td.findAll("span"):
             attrs = span.attrs
             if attrs.get("class"):
@@ -255,12 +255,12 @@ class artistDP(dbBase):
         return amac
     
     
-    def getartistDPMedia(self):
-        amc  = artistDPMediaClass()
+    def getartistDatPiffMedia(self):
+        amc  = artistDatPiffMediaClass()
         mediaType = "MixTape"
         media = self.data["Media"]
         for album in media:
-            amdc = artistDPMediaDataClass(album=album["Name"], url=album["URL"], aclass=None, aformat=None, artist=album["Artists"], code=album["Code"], year=None)
+            amdc = artistDatPiffMediaDataClass(album=album["Name"], url=album["URL"], aclass=None, aformat=None, artist=album["Artists"], code=album["Code"], year=None)
             if amc.media.get(mediaType) is None:
                 amc.media[mediaType] = []
             amc.media[mediaType].append(amdc)
@@ -271,9 +271,9 @@ class artistDP(dbBase):
     #######################################################################################################################################
     ## Artist Media Counts
     #######################################################################################################################################        
-    def getartistDPMediaCounts(self, media):
+    def getartistDatPiffMediaCounts(self, media):
         
-        amcc = artistDPMediaCountsClass()
+        amcc = artistDatPiffMediaCountsClass()
         
         credittype = "Releases"
         if amcc.counts.get(credittype) == None:
@@ -288,9 +288,9 @@ class artistDP(dbBase):
     #######################################################################################################################################
     ## Artist Variations
     #######################################################################################################################################
-    def getartistDPProfile(self):
+    def getartistDatPiffProfile(self):
         data = {}        
-        apc  = artistDPProfileClass(profile=data.get("Formed"), aliases=data.get("Aliases"),
+        apc  = artistDatPiffProfileClass(profile=data.get("Formed"), aliases=data.get("Aliases"),
                                     members=data.get("Members"), groups=data.get("In Groups"),
                                     sites=data.get("Sites"), variations=data.get("Variations"))
         return apc
@@ -300,20 +300,20 @@ class artistDP(dbBase):
     #######################################################################################################################################
     ## Artist Pages
     #######################################################################################################################################
-    def getartistDPPages(self):
-        apc   = artistDPPageClass(ppp=1, tot=1, redo=False, more=False)
+    def getartistDatPiffPages(self):
+        apc   = artistDatPiffPageClass(ppp=1, tot=1, redo=False, more=False)
         return apc
             
         pageData = bsdata.find("div", {"class": "pagination bottom"})
         if pageData is None:
             err = "pagination bottom"
-            apc = artistDPPageClass(err=err)
+            apc = artistDatPiffPageClass(err=err)
             return apc
         else:
             x = pageData.find("strong", {"class": "pagination_total"})
             if x is None:
                 err = "pagination_total"
-                apc = artistDPPageClass(err=err)
+                apc = artistDatPiffPageClass(err=err)
                 return apc
             else:
                 txt = x.text
@@ -326,23 +326,23 @@ class artistDP(dbBase):
                     tot   = int(retval[1].replace(",", ""))
                 except:
                     err   = "int"
-                    apc   = artistDPPageClass(err=err)
+                    apc   = artistDatPiffPageClass(err=err)
                     return apc
 
                 if ppp < 500:
                     if tot < 25 or ppp == tot:
-                        apc   = artistDPPageClass(ppp=ppp, tot=tot, redo=False, more=False)
+                        apc   = artistDatPiffPageClass(ppp=ppp, tot=tot, redo=False, more=False)
                     else:
-                        apc   = artistDPPageClass(ppp=ppp, tot=tot, redo=True, more=False)
+                        apc   = artistDatPiffPageClass(ppp=ppp, tot=tot, redo=True, more=False)
                 else:
                     if tot < 500:
-                        apc   = artistDPPageClass(ppp=ppp, tot=tot, redo=False, more=False)
+                        apc   = artistDatPiffPageClass(ppp=ppp, tot=tot, redo=False, more=False)
                     else:
-                        apc   = artistDPPageClass(ppp=ppp, tot=tot, redo=False, more=True)
+                        apc   = artistDatPiffPageClass(ppp=ppp, tot=tot, redo=False, more=True)
                         
                 return apc
             
-        return artistDPPageClass()
+        return artistDatPiffPageClass()
 
     
     
@@ -355,15 +355,15 @@ class artistDP(dbBase):
             print("Must call setData(data)")
             return
         
-        artist      = self.getartistDPName()
-        url         = self.getartistDPURL()
-        ID          = self.getartistDPDiscID()
-        pages       = self.getartistDPPages()
-        profile     = self.getartistDPProfile()
-        media       = self.getartistDPMedia()
-        mediaCounts = self.getartistDPMediaCounts(media)
+        artist      = self.getartistDatPiffName()
+        url         = self.getartistDatPiffURL()
+        ID          = self.getartistDatPiffDiscID()
+        pages       = self.getartistDatPiffPages()
+        profile     = self.getartistDatPiffProfile()
+        media       = self.getartistDatPiffMedia()
+        mediaCounts = self.getartistDatPiffMediaCounts(media)
         
         err = [artist.err, url.err, ID.err, pages.err, profile.err, mediaCounts.err, media.err]
-        adc = artistDPDataClass(artist=artist, url=url, ID=ID, pages=pages, profile=profile, mediaCounts=mediaCounts, media=media, err=err)
+        adc = artistDatPiffDataClass(artist=artist, url=url, ID=ID, pages=pages, profile=profile, mediaCounts=mediaCounts, media=media, err=err)
         
         return adc

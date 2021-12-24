@@ -5,6 +5,7 @@ from artistDBBase import artistDBMediaDataClass, artistDBMediaCountsClass, artis
 from artistDBBase import artistDBTextClass, artistDBLinkClass, artistDBTagClass
 from strUtils import fixName
 import json
+import regex
 from dbUtils import utilsAlbumOfTheYear
 from hashlib import md5
 
@@ -55,6 +56,16 @@ class artistAlbumOfTheYear(artistDBBase):
         h1 = self.bsdata.find("h1", {"class": 'artistHeadline'})
         artistName = h1.text if h1 is not None else None
         if artistName is not None:
+            bracketValues = regex.findall(r'\[(.*?)\]+', artistName)
+            if len(bracketValues) > 0:
+                ignores = ['rap', '2', '3', '4', 'NOR', 'US', 'unknown Artist', 'CHE', 'email\xa0protected', '70s', '60s', '80s', '90s', 'BRA', 'SWE', 'France', 'FR', 'UK', 'JP', 'DE', 'USA', 'RUS', 'ARG', 'DEU']
+                for ignore in ignores:
+                    arg = " [{0}]".format(ignore)
+                    if arg in artistName:
+                        artistName = artistName.replace(arg, "")
+                bracketValues = regex.findall(r'\[(.*?)\]+', artistName)
+                
+            artistName = " & ".join(bracketValues) if len(bracketValues) > 0 else artistName
             anc = artistDBNameClass(name=artistName, err=None)
             return anc
         else:
@@ -69,7 +80,18 @@ class artistAlbumOfTheYear(artistDBBase):
                 anc = artistDBNameClass(name=None, err = "CouldNotCompileJSON")
                 return anc
 
-            anc = artistDBNameClass(name=artist, err=None)
+            artistName = artist
+            bracketValues = regex.findall(r'\[(.*?)\]+', artistName)
+            if len(bracketValues) > 0:
+                ignores = ['rap', '2', '3', '4', 'NOR', 'US', 'unknown Artist', 'CHE', 'email\xa0protected', '70s', '60s', '80s', '90s', 'BRA', 'SWE', 'France', 'FR', 'UK', 'JP', 'DE', 'USA', 'RUS', 'ARG', 'DEU']
+                for ignore in ignores:
+                    arg = " [{0}]".format(ignore)
+                    if arg in artistName:
+                        artistName = artistName.replace(arg, "")
+                bracketValues = regex.findall(r'\[(.*?)\]+', artistName)
+                
+            artistName = " & ".join(bracketValues) if len(bracketValues) > 0 else artistName
+            anc = artistDBNameClass(name=artistName, err=None)
             return anc
 
     
@@ -82,14 +104,23 @@ class artistAlbumOfTheYear(artistDBBase):
         metaurl   = self.bsdata.find("meta", {"property": "og:url"})
 
         title = None
+        err = None
         if metatitle is not None:
-            title = metatitle.attrs['content']
+            try:
+                title = metatitle.attrs['content']
+            except:
+                title = None
+                err = "NoTitle"
 
         url = None
         if metatitle is not None:
-            url = metaurl.attrs['content']
+            try:
+                url = metaurl.attrs['content']
+            except:
+                url = None
+                err = "NoURL"
 
-        amc = artistDBMetaClass(title=title, url=url)
+        amc = artistDBMetaClass(title=title, url=url, err=err)
         return amc
         
 

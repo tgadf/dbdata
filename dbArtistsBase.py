@@ -256,6 +256,24 @@ class dbArtistsBase:
         return newFiles
     
     ##########################################
+    ## Song
+    ##########################################            
+    def getArtistSongFiles(self, modVal, expr, force=False):
+        ffd   = filesFromDir(ext=".p")
+        files = ffd.getFiles(self.getModValDir(modVal))
+        newFiles = files if force is True else self.getFilesByRecency(files, expr)
+        return newFiles
+    
+    ##########################################
+    ## Composition
+    ##########################################            
+    def getArtistCompositionFiles(self, modVal, expr, force=False):
+        ffd   = filesFromDir(ext=".p")
+        files = ffd.getFiles(self.getModValDir(modVal))
+        newFiles = files if force is True else self.getFilesByRecency(files, expr)
+        return newFiles
+    
+    ##########################################
     ## Extra
     ##########################################            
     def getArtistExtraFiles(self, modVal, expr, force=False):
@@ -276,17 +294,5 @@ class dbArtistsBase:
     def getAllRawSpotifyFiles(self, dirVal, expr, force=False):
         ffd   = filesFromDir(ext=".p")
         files = ffd.getFiles(setDir(dirVal, "spotify"))
-        newFiles = files if force is True else self.getFilesByRecency(files, expr)
-        return newFiles
-        
-    def getArtistSongFiles(self, modVal, expr, force=False):
-        ffd   = filesFromDir(ext=".p")
-        files = ffd.getFiles(setDir(self.getModValDir(modVal), "song"))
-        newFiles = files if force is True else self.getFilesByRecency(files, expr)
-        return newFiles
-        
-    def getArtistCompositionFiles(self, modVal, expr, force=False):
-        ffd   = filesFromDir(ext=".p")
-        files = ffd.getFiles(setDir(self.getModValDir(modVal), "composition"))
         newFiles = files if force is True else self.getFilesByRecency(files, expr)
         return newFiles

@@ -100,4 +100,65 @@ class dbArtistsAssertSong(dbArtistsBase):
         print(newIgnores)
         tsUpdate = timestat("Adding {0} ArtistIDs To Master Song Ignore List".format(len(newIgnores)))
         self.updateMasterIgnoreSongData(newIgnores)
-        tsUpdate.stop()    
+        tsUpdate.stop()  
+ 
+        
+#################################################################################################################################
+# Song
+#################################################################################################################################
+class dbArtistsSong(dbArtistsBase):
+    def __init__(self, dbArtists):        
+        super().__init__(dbArtists)
+        self.setSong()
+        self.dbArtists = dbArtists
+        
+    def parse(self, modVal, expr, force=False, debug=False):
+        ts = timestat("Parsing ModVal={0} Song Files".format(modVal))  
+        
+        tsFiles  = timestat("Finding Files To Parse")
+        newFiles = self.getArtistSongFiles(modVal, expr, force)
+        tsFiles.stop()
+
+        N = len(newFiles)
+        modValue = 500 if N >= 1000 else 100
+        if N > 0:
+            tsDB = timestat("Loading ModVal={0} DB Data".format(modVal))
+            dbdata   = self.disc.getDBModValData(modVal) ## We do not want to overwrite other data
+            tsDB.stop()
+            
+        newData  = 0
+        tsParse = timestat("Parsing {0} New Song Files For ModVal={1}".format(N, modVal))
+        for i,ifile in enumerate(newFiles):
+            if (i+1) % modValue == 0 or (i+1) == N:
+                print("{0: <15}Parsing {1}".format("{0}/{1}".format(i+1,N), ifile))
+            artistID = getBaseFilename(ifile)
+            info     = self.artist.getData(ifile)
+            
+            currentKeys = []
+            if dbdata.get(artistID) is not None:
+                currentKeys = list(dbdata[artistID].media.media.keys())
+            else:
+                dbdata[artistID] = info
+                newData += 1
+                continue
+            
+            keys = list(set(list(info.media.media.keys()) + currentKeys))
+            for k in keys:
+                v = info.media.media.get(k)
+                if v is None:
+                    continue
+                iVal  = {v2.code: v2 for v2 in v}
+                dVal  = dbdata[artistID].media.media.get(k)
+                if dVal is None:
+                    Tretval = iVal
+                else:
+                    Tretval = {v2.code: v2 for v2 in dVal}
+                    Tretval.update(iVal)
+                dbdata[artistID].media.media[k] = list(Tretval.values())
+            newData += 1
+            
+        if newData > 0:
+            print("Saving {0} New Entries".format(newData))
+            self.disc.saveDBModValData(idata=dbdata, modVal=modVal) ## We do not want to overwrite other data
+            
+        tsParse.stop()  

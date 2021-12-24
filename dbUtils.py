@@ -1,4 +1,4 @@
-from hashlib import md5, blake2b, sha256, sha1
+from hashlib import md5, blake2b, sha256, sha1, sha224
 import urllib
 from fsUtils import mkSubDir, setFile, isFile
 from fileUtils import getBaseFilename
@@ -323,6 +323,44 @@ class utilsLastFM(utilsBase):
     
 
 ################################################################################################################
+# DatPiff
+################################################################################################################
+class utilsDatPiff(utilsBase):
+    def __init__(self, disc=None):
+        super().__init__(disc)
+        
+        
+    def getArtistID(self, name, debug=False):
+        if name is None:
+            return None
+        m = sha1()
+        for val in name.split(" "):
+            m.update(val.encode('utf-8'))
+        hashval = m.hexdigest()
+        artistID  = str(int(hashval, 16) % int(1e7))
+        return artistID
+    
+
+################################################################################################################
+# ClassicalNet
+################################################################################################################
+class utilsClassicalNet(utilsBase):
+    def __init__(self, disc=None):
+        super().__init__(disc)
+        
+        
+    def getArtistID(self, name, debug=False):
+        if name is None:
+            return None
+        m = sha224()
+        for val in name.split(" "):
+            m.update(val.encode('utf-8'))
+        hashval = m.hexdigest()
+        artistID  = str(int(hashval, 16) % int(1e7))
+        return artistID
+    
+
+################################################################################################################
 # RockCorner
 ################################################################################################################
 class utilsRockCorner(utilsBase):
@@ -382,7 +420,7 @@ class utilsRateYourMusic(utilsBase):
             if ipt is None:
                 if debug:
                     print("There is not <input> class...")
-                return none
+                return None
         
         try:
             value = ipt['value']
