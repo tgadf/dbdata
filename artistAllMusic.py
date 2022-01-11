@@ -5,6 +5,7 @@ from artistDBBase import artistDBMediaDataClass, artistDBMediaCountsClass, artis
 from artistDBBase import artistDBTextClass, artistDBLinkClass
 from strUtils import fixName
 from dbUtils import utilsAllMusic
+from hashlib import md5
 
 
 class artistAllMusic(artistDBBase):
@@ -26,7 +27,7 @@ class artistAllMusic(artistDBBase):
         ID          = self.getID(url)
         pages       = self.getPages()
         profile     = self.getProfile()
-        media       = self.getMedia()
+        media       = self.getMedia(url.url)
         mediaCounts = self.getMediaCounts(media)
         info        = self.getInfo()
         
@@ -153,11 +154,30 @@ class artistAllMusic(artistDBBase):
         searchData  = [artistDBTextClass(searchTerm)] if searchTerm is not None else None
         
         tabsul      = self.bsdata.find("ul", {"class": "tabs"})
+        #print('tabsul',tabsul)
         refs        = tabsul.findAll("a") if tabsul is not None else None
+        #print('refs',refs)
         tabLinks    = [artistDBLinkClass(ref) for ref in refs] if refs is not None else None
-        keys        = [x.title for x in tabLinks] if tabLinks is not None else None
-        vals        = tabLinks
-        tabsData    = dict(zip(keys, vals)) if (isinstance(keys, list) and all(keys)) else None
+        #print('tabLinks',tabLinks)
+        #print('tabLinks',[x.get() for x in tabLinks])
+        tabKeys = []
+        if isinstance(tabLinks, list):
+            for i,tabLink in enumerate(tabLinks):
+                keyTitle = tabLink.title
+                keyText  = tabLink.text
+                if keyTitle is not None:
+                    tabKeys.append(keyTitle)
+                    continue
+                if keyText is not None:
+                    key = keyText.replace("\n", "").split()[0]
+                    tabKeys.append(key)
+                    continue
+                tabKeys.append("Tab {0}".format(i))
+        else:
+            tabKeys = None
+            
+        tabsData    = dict(zip(tabKeys, tabLinks)) if (isinstance(tabKeys, list) and all(tabKeys)) else None
+        #print('tabsData', tabsData)
 
         if searchData is not None:
             if extraData is None:
@@ -167,6 +187,7 @@ class artistAllMusic(artistDBBase):
             if extraData is None:
                 extraData = {}
             extraData["Tabs"] = tabsData
+        #print('extraData',extraData)
 
 
         basicInfo = self.bsdata.find("section", {"class": "basic-info"})
@@ -221,9 +242,112 @@ class artistAllMusic(artistDBBase):
         return amac
     
     
-    def getMedia(self):
+    #def getMediaCredits(self):
+    def getMediaSongs(self):
+        mediaType = "Songs"
+        media  = {}
+        tables = self.bsdata.findAll("table")
+        for table in tables:
+            trs = table.findAll("tr")
+
+            header  = trs[0]
+            ths     = header.findAll("th")
+            headers = [x.text.strip() for x in ths]
+            if len(headers) == 0:
+                continue
+            for j,tr in enumerate(trs[1:]):
+                tds  = tr.findAll("td")
+                vals = [td.text.strip() for td in tds]
+
+                tdTitle   = tr.find("td", {"class": "title-composer"})
+                divTitle  = tdTitle.find("div", {"class": "title"}) if tdTitle is not None else None
+                compTitle = tdTitle.find("div", {"class": "composer"}) if tdTitle is not None else None
+
+                songTitle = divTitle.text if divTitle is not None else None
+                songTitle = songTitle.strip() if songTitle is not None else None
+                songURL   = divTitle.find('a') if divTitle is not None else None
+                songURL   = artistDBLinkClass(songURL) if songURL is not None else None
+                
+                if songTitle is None:
+                    continue
+
+                songArtists = compTitle.findAll("a") if compTitle is not None else None
+                if songArtists is not None:
+                    if len(songArtists) == 0:
+                        songArtists = [artistDBTextClass(compTitle.text)]
+                    else:
+                        songArtists = [artistDBLinkClass(ref) for ref in songArtists]
+                        
+                m = md5()
+                m.update(str(j).encode('utf-8'))
+                if songTitle is not None:
+                    m.update(songTitle.encode('utf-8'))
+                code = str(int(m.hexdigest(), 16) % int(1e5))
+
+                amdc = artistDBMediaDataClass(album=songTitle, url=songURL, aclass=None, aformat=None, artist=songArtists, code=code, year=None)
+                if media.get(mediaType) is None:
+                    media[mediaType] = []
+                media[mediaType].append(amdc)
+                
+        return media
+        
+        
+    def getMediaCompositions(self):
+        media  = {"Composition": []}
+        tables = self.bsdata.findAll("table")
+        for table in tables:
+            trs = table.findAll("tr")
+
+            header  = trs[0]
+            ths     = header.findAll("th")
+            headers = [x.text.strip() for x in ths]
+            if len(headers) == 0:
+                continue
+            for tr in trs[1:]:
+                tds  = tr.findAll("td")
+                vals = [td.text.strip() for td in tds]
+                if len(vals) == len(headers):
+                    albumData = dict(zip(headers,vals))
+
+                    url   = None
+                    year  = albumData.get('Year')
+                    album = albumData.get('Title')
+                    
+                    if album is None:
+                        continue
+
+                    mediaType = "Composition"
+                    for k,v in albumData.items():
+                        if k.find("Genre") != -1:
+                            mediaType = v
+
+                    m = md5()
+                    if year is not None:
+                        m.update(year.encode('utf-8'))
+                    if album is not None:
+                        m.update(album.encode('utf-8'))
+                    code = str(int(m.hexdigest(), 16) % int(1e5))
+
+                    amdc = artistDBMediaDataClass(album=album, url=url, aclass=None, aformat=None, artist=None, code=code, year=year)
+                    if media.get(mediaType) is None:
+                        media[mediaType] = []
+                    media[mediaType].append(amdc)
+                    
+        return media
+            
+                
+    def getMedia(self, url):
         amc  = artistDBMediaClass()
         name = "Albums"
+        if url is None:
+            name = "Unknown"
+        else:
+            if url.find("/credits") != -1:
+                name = "Credits"
+            if url.find("/songs") != -1:
+                name = "Songs"
+            if url.find("/compositions") != -1:
+                name = "Compositions"
         amc.media[name] = []
 
         tables = self.bsdata.findAll("table")
@@ -296,6 +420,20 @@ class artistAllMusic(artistDBBase):
                     amc.media[mediaType] = []
                 amc.media[mediaType].append(amdc)
 
+                
+        compMedia = self.getMediaCompositions()
+        for mediaType,mediaTypeData in compMedia.items():
+            if amc.media.get(mediaType) is None:
+                amc.media[mediaType] = []
+            amc.media[mediaType] += mediaTypeData
+            
+
+        songMedia = self.getMediaSongs()
+        for mediaType,mediaTypeData in songMedia.items():
+            if amc.media.get(mediaType) is None:
+                amc.media[mediaType] = []
+            amc.media[mediaType] += mediaTypeData
+                
         return amc
     
     

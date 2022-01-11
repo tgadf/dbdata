@@ -6,6 +6,7 @@ from ioUtils import saveFile
 from time import sleep
 import urllib
 from webUtils import getHTML
+from pandas import Series
 
 
 #################################################################################################################################
@@ -123,23 +124,33 @@ class dbArtistsSong(dbArtistsBase):
         modValue = 500 if N >= 1000 else 100
         if N > 0:
             tsDB = timestat("Loading ModVal={0} DB Data".format(modVal))
-            dbdata   = self.disc.getDBModValData(modVal) ## We do not want to overwrite other data
+            dbdata   = self.disc.getDBModValData(modVal).to_dict() ## We do not want to overwrite other data
             tsDB.stop()
             
         newData  = 0
+        newIDs = 0
         tsParse = timestat("Parsing {0} New Song Files For ModVal={1}".format(N, modVal))
         for i,ifile in enumerate(newFiles):
             if (i+1) % modValue == 0 or (i+1) == N:
                 print("{0: <15}Parsing {1}".format("{0}/{1}".format(i+1,N), ifile))
             artistID = getBaseFilename(ifile)
-            info     = self.artist.getData(ifile)
             
+            
+            ########################################
+            # Test For Previous Entries
+            ########################################
+            if dbdata.get(artistID) is not None:
+                if dbdata[artistID].media.media.get("Songs") is not None:
+                    continue
+                    
             currentKeys = []
+            info        = self.artist.getData(ifile)
             if dbdata.get(artistID) is not None:
                 currentKeys = list(dbdata[artistID].media.media.keys())
             else:
                 dbdata[artistID] = info
                 newData += 1
+                newIDs += 1
                 continue
             
             keys = list(set(list(info.media.media.keys()) + currentKeys))
@@ -157,8 +168,28 @@ class dbArtistsSong(dbArtistsBase):
                 dbdata[artistID].media.media[k] = list(Tretval.values())
             newData += 1
             
+            
+            ########################################
+            # Update Profile If Needed
+            ########################################
+            extra = info.profile.extra
+            newTabs = extra.get("Tabs", {}) if isinstance(extra, dict) else {}
+            currentExtra = dbdata[artistID].profile.extra
+            currentTabs  = currentExtra.get("Tabs", {}) if isinstance(currentExtra, dict) else {}
+            if len(currentTabs) == 0 and len(newTabs) > 0:
+                dbdata[artistID].profile.extra["Tabs"] = newTabs
+            if len(currentTabs) > 0 and len(newTabs) > 0:
+                for tab,tabURL in newTabs.items():
+                    if currentTabs.get(tab) is None:
+                        dbdata[artistID].profile.extra["Tabs"][tab] = tabURL
+                
+            
         if newData > 0:
-            print("Saving {0} New Entries".format(newData))
+            dbdata = Series(dbdata)
+            print("Saving {0} Song Entries".format(newData))
+            print("Saving {0} New Entries".format(newIDs))
             self.disc.saveDBModValData(idata=dbdata, modVal=modVal) ## We do not want to overwrite other data
+        else:
+            print("Not Saving Any New Entries")
             
         tsParse.stop()  

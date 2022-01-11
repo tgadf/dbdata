@@ -1,30 +1,30 @@
 from dbArtistsBase import dbArtistsBase
 from fsUtils import isFile
-
 from fileUtils import getBaseFilename
 from timeUtils import timestat
+from ioUtils import saveFile
 from time import sleep
 import urllib
 from webUtils import getHTML
 from pandas import Series
 
-        
+
 #################################################################################################################################
-# Assert Credit (Find Credit For AllMusic)
+# Assert Composition (Find Composition For AllMusic)
 #################################################################################################################################
-class dbArtistsAssertCredit(dbArtistsBase):
+class dbArtistsAssertComposition(dbArtistsBase):
     def __init__(self, dbArtists):        
         super().__init__(dbArtists)
         self.setPrimary()
         self.dbArtists = dbArtists
-        self.dbCredit  = dbArtistsCredit(dbArtists)
-        print("dbArtistsAssertCredit({0})".format(self.db))
+        #self.dbComposition = dbArtistsComposition(dbArtists)
+        print("dbArtistsAssertComposition({0})".format(self.db))
         try:
             self.masterIgnoreData = self.getMasterIgnoreData()
-            self.creditIgnores = self.masterIgnoreData["AllMusic"]["Credit"]
-            print("  --> Found {0} AllMusic Credit IDs To Ignore".format(len(self.creditIgnores)))
+            self.songIgnores = self.masterIgnoreData["AllMusic"]["Composition"]
+            print("  --> Found {0} AllMusic Composition IDs To Ignore".format(len(self.songIgnores)))
         except:
-            self.creditIgnores = []
+            self.songIgnores = []
             #raise ValueError("Could not load AllMusic Credit Ignores data!")
         self.metadata = {}
                 
@@ -32,81 +32,92 @@ class dbArtistsAssertCredit(dbArtistsBase):
     def getMetadata(self):
         return self.metadata
     
-    def createCreditMetadata(self, modVal=None):
+    def createCompositionMetadata(self, modVal=None):
         modVals = [modVal] if modVal is not None else range(100)
             
-        ts = timestat("Creating AllMusic Credit Metadata")
+        ts = timestat("Creating AllMusic Composition Metadata")
         for modVal in modVals:
-            tsFiles = timestat("Finding Primary Files For ModVal={0}".format(modVal))
-            modValPrimaryFiles = self.getArtistPrimaryFiles(modVal, expr=None, force=True)
-            tsFiles.stop()
             
-            tsIgnore = timestat("Removing IDs To Ignore From {0} Primary Files For ModVal={0}".format(len(modValPrimaryFiles), modVal))
-            modValPrimaryGoodFiles = [ifile for ifile in modValPrimaryFiles if getBaseFilename(ifile) not in self.creditIgnores]
-            tsIgnore.stop()
-            
-            tsDBData = timestat("Finding Known Artists From {0} Primary/Good Files For ModVal={1}".format(len(modValPrimaryGoodFiles), modVal))
-            dbData = self.disc.getDBModValData(modVal)
-            missingArtistIDFiles = [ifile for ifile in modValPrimaryFiles if dbData.get(getBaseFilename(ifile)) is None]
-            tsDBData.stop()
-            
-            tsCredit = timestat("Finding Known Credit Artists From {0} Unknown Artists For ModVal={1}".format(len(missingArtistIDFiles), modVal))
-            creditFiles = {getBaseFilename(ifile): ifile for ifile in self.dbCredit.getArtistCreditFiles(modVal, expr=None, force=True)}
-            missingCreditIDs = [ifile for ifile in missingArtistIDFiles if creditFiles.get(getBaseFilename(ifile)) is None]
+            tsDBData = timestat("Finding Known Credit Artists For ModVal={0}".format(modVal))
+            dbData = self.getDBData(modVal)
+            dbArtistURLs    = {artistID: {"Name": artistData.artist.name, "URL": artistData.url.url} for artistID,artistData in dbData.items()}
+            tsDBData.stop()            
+
+            tsCredit = timestat("Finding Known Credit Artists From {0} Artists For ModVal={1}".format(len(dbArtistURLs), modVal))
+            creditArtistIDs = {artistID: artistData for artistID,artistData in dbArtistURLs.items() if artistData["URL"] is not None and artistData["URL"].endswith("/credits")}
             tsCredit.stop()
             
-            tsMeta = timestat("Finding Metadata For {0}/{1}/{2}/{3} Missing ArtistIDs for ModVal={4}".format(len(missingCreditIDs), len(missingArtistIDFiles), len(modValPrimaryGoodFiles), len(modValPrimaryFiles), modVal))
-            metaData = {getBaseFilename(ifile): self.artist.getData(ifile).meta for ifile in missingCreditIDs}
-            self.metadata[modVal] = {artistID: {"title": meta.title, "url": meta.url} for artistID,meta in metaData.items()}
+            tsIgnore = timestat("Removing IDs To Ignore From {0} Primary Files For ModVal={0}".format(len(creditArtistIDs), modVal))
+            availableArtistIDs = {artistID: artistData for artistID,artistData in creditArtistIDs.items() if artistID not in self.songIgnores}
+            tsIgnore.stop()
+            
+            tsMeta = timestat("Finding Metadata For {0}/{1}/{2} Missing ArtistIDs for ModVal={3}".format(len(availableArtistIDs), len(creditArtistIDs), len(dbArtistURLs), modVal))
+            self.metadata[modVal] = availableArtistIDs
             tsMeta.stop()
         ts.stop()
-                
+
     
-    def downloadUnknownArtistCredits(self):
+    def downloadUnknownArtistCompositions(self):
         newIgnores = []
         for modVal,modValMetadata in self.metadata.items():
             N = len(modValMetadata)
-            ts = timestat("Downloading {0} Unknown Credit Files For ModVal={1}".format(N, modVal))
+            ts = timestat("Downloading {0} Unknown Composition Files For ModVal={1}".format(N, modVal))
             for i,(artistID,artistIDData) in enumerate(modValMetadata.items()):
-                savename = self.dutils.getArtistSavename(artistID, credit=True)
+                savename = self.dutils.getArtistSavename(artistID, song=True)
+                
+                href   = artistIDData["URL"]
+                artist = artistIDData["Name"]
                 if isFile(savename):
                     continue
-                title  = artistIDData["title"]
-                title  = title.replace("Artist Search for ", "")
-                title  = title.replace(" | AllMusic", "")
-                title  = title.replace("Songs, Albums, Reviews, Bio & More", "").strip()
-                title  = title[1:] if title.startswith('"') else title
-                title  = title[:-1] if title.endswith('"') else title
-                artist = title
-                print("{0}/{1}:  [{2}]".format(i,N,artist))
-                if len(artist) < 1:
-                    continue
-                numDownload = self.dbArtists.searchForArtistCredit(artist=artist, artistID=artistID)
-                if numDownload == 0:
-                    newIgnores.append(artistID)
+
+                ## Replace /credits with /songs
+                href = "/".join(href.split('/')[:-1] + ["songs", "all"])
+                    
+                ## Create Full URL
+                url = urllib.parse.urljoin(self.dbArtists.baseURL, href)
+                print("\n")
+                print("="*100)
+                print("{0}/{1}:  [{2}] / [{3}]".format(i,N,artist,url))
+                
+
+                data, response = self.dutils.downloadURL(url)
+                if response == 200:
+                    bsdata = getHTML(data)
+                    if len(bsdata.findAll("th", {"class": "title-composer"})) > 0:
+                        print("  ---> Saving Data To {0}".format(savename))
+                        saveFile(idata=data, ifile=savename)
+                        sleep(3)
+                        continue
+                
+                sleep(3)
+                newIgnores.append(artistID)
+                        
+                
+                if i == 20:
+                    break
             ts.stop()
             
         print("New IDs To Ignore")
         print(newIgnores)
-        tsUpdate = timestat("Adding {0} ArtistIDs To Master Credit Ignore List".format(len(newIgnores)))
-        self.updateMasterIgnoreCreditData(newIgnores)
-        tsUpdate.stop()
+        tsUpdate = timestat("Adding {0} ArtistIDs To Master Composition Ignore List".format(len(newIgnores)))
+        self.updateMasterIgnoreCompositionData(newIgnores)
+        tsUpdate.stop()  
  
         
 #################################################################################################################################
-# Credit
+# Composition
 #################################################################################################################################
-class dbArtistsCredit(dbArtistsBase):
+class dbArtistsComposition(dbArtistsBase):
     def __init__(self, dbArtists):        
         super().__init__(dbArtists)
-        self.setCredit()
+        self.setComposition()
         self.dbArtists = dbArtists
         
     def parse(self, modVal, expr, force=False, debug=False):
-        ts = timestat("Parsing ModVal={0} Credit Files".format(modVal))  
+        ts = timestat("Parsing ModVal={0} Composition Files".format(modVal))  
         
         tsFiles  = timestat("Finding Files To Parse")
-        newFiles = self.getArtistCreditFiles(modVal, expr, force)
+        newFiles = self.getArtistCompositionFiles(modVal, expr, force)
         tsFiles.stop()
 
         N = len(newFiles)
@@ -117,8 +128,8 @@ class dbArtistsCredit(dbArtistsBase):
             tsDB.stop()
             
         newData  = 0
-        newIDs   = 0
-        tsParse = timestat("Parsing {0} New Credit Files For ModVal={1}".format(N, modVal))
+        newIDs = 0
+        tsParse = timestat("Parsing {0} New Composition Files For ModVal={1}".format(N, modVal))
         for i,ifile in enumerate(newFiles):
             if (i+1) % modValue == 0 or (i+1) == N:
                 print("{0: <15}Parsing {1}".format("{0}/{1}".format(i+1,N), ifile))
@@ -129,7 +140,9 @@ class dbArtistsCredit(dbArtistsBase):
             # Test For Previous Entries
             ########################################
             if dbdata.get(artistID) is not None:
-                if dbdata[artistID].media.media.get("Credits") is not None:
+                if dbdata[artistID].media.media.get("Composition") is not None:
+                    continue
+                if dbdata[artistID].media.media.get("Compositions") is not None:
                     continue
                     
             currentKeys = []
@@ -175,10 +188,10 @@ class dbArtistsCredit(dbArtistsBase):
             
         if newData > 0:
             dbdata = Series(dbdata)
-            print("Saving {0} Credit Entries".format(newData))
+            print("Saving {0} Composition Entries".format(newData))
             print("Saving {0} New Entries".format(newIDs))
             self.disc.saveDBModValData(idata=dbdata, modVal=modVal) ## We do not want to overwrite other data
         else:
             print("Not Saving Any New Entries")
             
-        tsParse.stop()  
+        tsParse.stop() 

@@ -1,6 +1,8 @@
 AlbumOfTheYear:
   Name:
   - Unknown Artist
+  - Various Artists
+  - Public Domain
 AllMusic:
   Credit:
   - '0003327364'
@@ -5229,6 +5231,7 @@ MusicBrainz:
   - Harry Nach
   - '[Disney]'
   - Various Artists
+  - Public Domain
   - 初音ミク
   - '[no artist]'
   - '[nature sounds]'
@@ -5237,10 +5240,12 @@ MusicBrainz:
   - '[Christmas music]'
   - Geovanni
   - '[unknown]'
+  - '[anonymous]'
 RateYourMusic:
   Name:
   - Traditional
   - Various Artists
+  - Public Domain
   Primary:
   - https://rateyourmusic.com/artist/caleb_r_k_williams
   - https://rateyourmusic.com/artist/8_bit_misfits

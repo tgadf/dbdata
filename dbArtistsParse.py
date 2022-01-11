@@ -7,6 +7,7 @@ from sys import prefix
 import urllib
 from time import sleep
 from webUtils import getHTML
+from pandas import Series
     
 from fileIO import fileIO
 from fsUtils import fileUtil
@@ -65,6 +66,7 @@ class dbArtistsPrimary(dbArtistsBase):
         tsParse.stop()
             
         if newData > 0:
+            dbdata = Series(dbdata)
             print("Saving [{0}/{1}] {2} Entries To {3}".format(newData, len(dbdata), "ID Data", self.disc.getDBModValFilename(modVal)))
             self.disc.saveDBModValData(modVal=modVal, idata=dbdata)
         
@@ -221,66 +223,3 @@ class dbArtistsRawFiles(dbArtistsBase):
             
         print("Created {0}/{1} New Artist Files".format(newData, N))
         tsParse.stop()
-
-
-
-
-        
-#################################################################################################################################
-#
-# Assert Compositions (Find Compositions For AllMusic)
-#
-#################################################################################################################################
-class dbArtistsAssertComposition(dbArtistsBase):
-    def __init__(self, dbArtists):        
-        super().__init__(dbArtists)
-        self.setPrimary()
-        self.dbArtists = dbArtists
-        self.metadata = {}
-        self.ignores={}
-    
-    def parse(self):
-        for modVal in range(100):
-            self.parseModVal(modVal)
-            print("{0}\t{1}".format(modVal,len(self.metadata)))
-            
-    def parseModVal(self, modVal):
-        savename = self.disc.getArtistsDBModValMetadataFilename(modVal)
-        print(savename)
-        1/0
-
-        newFiles = self.getArtistFiles(modVal, force=True)
-        force    = False
-        dbdata   = self.getDBData(modVal, force=force)
-
-        newData  = 0
-        for j,ifile in enumerate(newFiles):
-            artistID = getBaseFilename(ifile)
-            isKnown  = dbdata.get(artistID)
-            if isKnown is None:
-                info     = self.artist.getData(ifile)
-                meta     = info.meta
-                self.metadata[artistID] = {"title": meta.title, "url": meta.url}
-                
-    def getResults(self):
-        return self.metadata
-    
-    def downloadUnknownArtistCompositions(self):
-        for artistID,artistIDData in self.metadata.items():
-            if artistID in self.ignores.keys():
-                print("Ignoring {0} artistID".format(artistID))
-                continue
-            savename = self.dutils.getArtistSavename(artistID, composition=True)
-            if isFile(savename):
-                continue
-            title  = artistIDData["title"]
-            title  = title.replace("Artist Search for ", "")
-            title  = title.replace(" | AllMusic", "")
-            artist = title[1:-1]
-            if len(artist) < 1:
-                continue
-            self.dbArtists.searchForArtistComposition(artist=artist, artistID=artistID)
-            1/0
-        
-
-            

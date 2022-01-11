@@ -124,7 +124,15 @@ class utilsAllMusic(utilsBase):
         
         ### Remove /discography if found
         if href.endswith("/discography"):
-            href=href[:-12]
+            href = href[:-12]
+        if href.endswith("/credits"):
+            href = href[:-8]
+        if href.endswith("/songs"):
+            href = href[:-6]
+        if href.endswith("/songs/all"):
+            href = href[:-10]
+        if href.endswith("/compositions"):
+            href = href[:-13]
             
 
         ### Test For crucial part of URL
@@ -342,6 +350,25 @@ class utilsDatPiff(utilsBase):
     
 
 ################################################################################################################
+# SpotifyCharts
+################################################################################################################
+class utilsSpotifyCharts(utilsBase):
+    def __init__(self, disc=None):
+        super().__init__(disc)
+        
+
+    def getArtistID(self, artistName):
+        if name is None:
+            return None
+        m = sha224()
+        for val in artistName.split():
+            m.update(val.encode('utf-8'))
+        hashval = m.hexdigest()
+        artistID = str(int(hashval, 16) % int(1e11))
+        return artistID
+    
+
+################################################################################################################
 # ClassicalNet
 ################################################################################################################
 class utilsClassicalNet(utilsBase):
@@ -444,6 +471,43 @@ class utilsRateYourMusic(utilsBase):
 # Deezer
 ################################################################################################################
 class utilsDeezer(utilsBase):
+    def __init__(self, disc=None):
+        super().__init__(disc)
+        
+        
+    def getArtistID(self, url, debug=False):
+        if url is None:
+            return None
+        artistID = url.split("/")[-1]
+        
+        ## Remove everything after '?' if present
+        pos = artistID.find('?')
+        if pos != -1:
+            artistID = artistID[:pos]
+        
+        try:
+            str(int(artistID))
+        except:
+            print("Could not determine artistID from URL {0}".format(url))
+            return None
+        
+        return artistID
+        
+        
+    def getAlbumCode(self, name, url=None):
+        m = md5()
+        m.update(name.encode('utf-8'))
+        if url is not None:
+            m.update(url.encode('utf-8'))
+        hashval = m.hexdigest()
+        code    = str(int(hashval, 16) % int(1e7))
+        return code
+    
+
+################################################################################################################
+# DeezerAPI
+################################################################################################################
+class utilsDeezerAPI(utilsBase):
     def __init__(self, disc=None):
         super().__init__(disc)
         
