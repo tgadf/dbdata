@@ -23,7 +23,11 @@ class utilsBase:
     def getHashMod(self, hashval, modval):
         ival = int(hashval, 16)
         return ival % modval
+    
 
+    def getArtistIDModVal(self, artistID):
+        return self.getDiscIDHashMod(artistID, self.maxModVal)
+        
     
     def getDiscIDHashMod(self, artistID, modval):
         if artistID is None:
@@ -276,6 +280,57 @@ class utilsDiscogs(utilsBase):
             print("Found ID {0} from {1}".format(artistID, href))
             
         return artistID  
+
+    
+    
+################################################################################################################
+# LastFM API
+################################################################################################################
+class utilsLastFMAPI(utilsBase):
+    def __init__(self, disc=None):
+        super().__init__(disc)
+        self.baseURL = "https://www.last.fm/music/"
+        self.relURL  = "/music/"
+    def quoteIt(self, href, debug=False):
+        if href is not None:
+            if "+" in href:
+                if debug:
+                    print("Running Quote on {0}".format(href))
+                href = quote("+".join([quote(x) for x in href.split("+")]))
+                if debug:
+                    print("    Resulting in {0}".format(href))
+        return href
+        
+    def getArtistID(self, href, debug=False):
+        if href is None:
+            return None
+        if href.startswith(self.baseURL):
+            if debug:
+                print("Removing {0} from url --> {1}".format(self.baseURL,href))
+            href = href[len(self.baseURL):]        
+        if href.startswith(self.relURL):
+            if debug:
+                print("Removing {0} from url --> {1}".format(self.relURL,href))
+            href = href[len(self.relURL):]
+        name = href.split("/+albums")[0]
+        if name.endswith("/"):
+            name = href[:-1]
+        if debug:
+            print("Raw URL: {0}".format(name))
+        #name = self.quoteIt(name, debug=debug)
+        if debug:
+            print("Raw URL (Post Quote): {0}".format(name))
+        if name is None:
+            return None
+        name = "{0}{1}".format(self.baseURL,name)
+        if debug:
+            print("Full URL: {0}".format(name))
+        m = md5()
+        for val in name.split(" "):
+            m.update(val.encode('utf-8'))
+        hashval = m.hexdigest()
+        artistID  = str(int(hashval, 16) % int(1e11))
+        return artistID
     
 
 ################################################################################################################
@@ -358,7 +413,7 @@ class utilsSpotifyCharts(utilsBase):
         
 
     def getArtistID(self, artistName):
-        if name is None:
+        if artistName is None:
             return None
         m = sha224()
         for val in artistName.split():

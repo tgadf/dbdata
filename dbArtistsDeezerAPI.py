@@ -11,5 +11,5 @@ class dbArtistsDeezerAPI(dbArtistsBase):
         self.db     = "DeezerAPI"
         self.disc   = dbBase(self.db.lower())
         self.artist = artistDeezerAPI(self.disc)
-        self.dutils = utilsDeezerAPI()
+        self.dutils = utilsDeezerAPI(self.disc)
         self.debug  = debug

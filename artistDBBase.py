@@ -11,6 +11,28 @@ from copy import copy, deepcopy
 
 
 
+
+#####################################################################################################################
+# DB-specific Classes
+#####################################################################################################################
+class lastfmRecord:
+    def __init__(self, item, recordType):
+        self.type = recordType
+        
+        self.URL    = item.get('url')
+        self.name   = item.get('name')
+        self.mbID   = item.get('mbid')
+        self.counts = item.get('playcount')
+        artist = item.get('artist', {})
+        self.artistName = artist.get('name')
+        self.artistMBID = artist.get('mbid')
+        self.artistURL  = artist.get('url')
+
+
+
+#####################################################################################################################
+# Artist DB Base Classes
+#####################################################################################################################
 class artistDBIDClass:
     def __init__(self, ID=None, err=None):
         self.ID=ID
@@ -197,6 +219,9 @@ class artistDBFileInfoClass:
         return self.__dict__
     
 
+#####################################################################################################################
+# Artist DB Data Class
+#####################################################################################################################
 class artistDBDataClass:
     def __init__(self, artist=None, meta=None, url=None, ID=None, pages=None, profile=None, media=None, mediaCounts=None, info=None, err=None):
         self.artist      = artist
@@ -263,7 +288,10 @@ class artistDBBase:
 
         
     def getDataBase(self, inputdata):
-        if fileUtil(inputdata).isFile():
+        if isinstance(inputdata, dict):
+            self.bsdata = inputdata
+            return
+        elif fileUtil(inputdata).isFile(): ## Assumes str I believe
             ioData = fileIO().get(inputdata)
             if isinstance(ioData, artistDBDataClass):
                 self.dbdata = ioData
@@ -281,6 +309,9 @@ class artistDBBase:
                     raise ValueError("Cannot read artist [bytes] file: {0}".format(inputdata))
                 return
             elif isBS4(ioData):
+                self.bsdata = ioData
+                return
+            elif isinstance(ioData, dict):
                 self.bsdata = ioData
                 return
             else:

@@ -25,7 +25,7 @@ class dbArtistsMetadata(dbArtistsBase):
     
     def createArtistMetadata(self):
         ts = timestat("Creating Artist Name Metadata For ModVal={0}".format(self.modVal))
-        artistIDMetadata = {artistID: [artistData.artist.name, artistData.url.url] for artistID,artistData in self.dbData.items() if artistData.artist.name is not None}
+        artistIDMetadata = {str(artistID): [artistData.artist.name, artistData.url.url] for artistID,artistData in self.dbData.items() if artistData.artist.name is not None}
         artistIDMetadata = Series(artistIDMetadata)
         
         print("Saving [{0}] {1} Entries To {2}".format(len(artistIDMetadata), "ID => Name/URL", self.disc.getMetadataArtistFilename(self.modVal)))
@@ -38,6 +38,7 @@ class dbArtistsMetadata(dbArtistsBase):
         ts = timestat("Creating Artist Album Metadata For ModVal={0}".format(self.modVal))        
         artistIDMetadata = {}
         for artistID,artistData in self.dbData.items():
+            artistID = str(artistID)
             if artistData.artist.name is None:
                 continue
             artistIDMetadata[artistID] = {}

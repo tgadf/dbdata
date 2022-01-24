@@ -1,15 +1,15 @@
 from dbArtistsBase import dbArtistsBase
 from dbBase import dbBase
-from artistLastFMAPI import artistLastFMAPI
-from dbUtils import utilsLastFMAPI
+from artistTidal import artistTidal
+from dbUtils import utilsBase
 
 ##################################################################################################################
 # Base Class
 ##################################################################################################################
-class dbArtistsLastFMAPI(dbArtistsBase):
+class dbArtistsTidal(dbArtistsBase):
     def __init__(self, debug=False):
-        self.db     = "LastFMAPI"
+        self.db     = "Tidal"
         self.disc   = dbBase(self.db.lower())
-        self.artist = artistLastFMAPI(self.disc)
-        self.dutils = utilsLastFMAPI(self.disc)
+        self.artist = artistTidal(self.disc)
+        self.dutils = utilsBase(self.disc)
         self.debug  = debug
