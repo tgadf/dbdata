@@ -7,7 +7,148 @@ from strUtils import fixName
 from dbUtils import utilsDiscogs
 
 
+
 class artistDiscogs(artistDBBase):
+    def __init__(self, debug=False):
+        super().__init__(debug)
+        self.dbUtils = utilsDiscogs()
+        
+        
+    ##############################################################################################################################
+    ## Parse Data
+    ##############################################################################################################################
+    def getData(self, inputdata):
+        self.getDataBase(inputdata)
+        self.checkData()
+        
+        if self.dbdata is not None:
+            return self.dbdata
+        if not isinstance(self.bsdata, dict):
+            raise ValueError("Could not parse Discogs API data")
+            
+        artistData = self.bsdata["Artist"]
+        albumsData = self.bsdata["Albums"]
+        
+        artistID   = artistData.name
+        artistName  = artistData["name"]
+        url         = "https://www.discogs.com/artist/{0}".format(artistID)
+
+        generalData = {}
+        generalData["RealName"]   = artistData["realname"]
+        generalData["Aliases"]    = artistData["MasterAliases"]
+        generalData["Groups"]     = artistData["MasterGroups"]
+        generalData["Members"]    = artistData["MasterMembers"]
+        generalData["Variations"] = artistData["MasterNameVariations"]
+        generalData = {k: v for k,v in generalData.items() if v is not None}
+        generalData = generalData if len(generalData) > 0 else None
+            
+
+        ########################################################################
+        # Get Releases
+        ########################################################################
+        mediaData = {}
+        if isinstance(albumsData,list):
+            for item in albumsData:
+                code        = item.get('id')
+                albumType   = item.get('type')
+                albumFormat = item.get('format')
+                albumLabel  = item.get('label')
+                albumName   = item.get('name')
+                albumURL    = item.get('url')
+                albumRole   = item.get('role')
+                albumArtist = item.get('artist')
+                albumYear   = item.get('year')
+                albumMain   = item.get('main_release')
+
+                mediaName = self.getMediaType(item)
+
+                amdc = artistDBMediaDataClass(album=albumName, url=albumURL, artist=albumArtist, code=code, aformat=albumFormat, aclass={"Label": albumLabel, "Main": albumMain}, year=albumYear)
+                if mediaData.get(mediaName) is None:
+                    mediaData[mediaName] = []
+                mediaData[mediaName].append(amdc)
+        elif isinstance(albumsData,dict):
+            mediaData = albumsData
+        else:
+            raise ValueError("Not sure how to process albums [{0}]".format(albumsData))
+            
+            
+        artist      = artistDBNameClass(name=artistName, err=None)
+        meta        = artistDBMetaClass(title=None, url=url)
+        url         = artistDBURLClass(url=url)
+        ID          = artistDBIDClass(ID=artistID)
+        pages       = artistDBPageClass(ppp=1, tot=1, redo=False, more=False)
+        profile     = artistDBProfileClass(general=generalData)
+        media       = artistDBMediaClass()
+        media.media = mediaData
+        mediaCounts = self.getMediaCounts(media)
+        info        = artistDBFileInfoClass(info=None)
+        
+        adc = artistDBDataClass(artist=artist, meta=meta, url=url, ID=ID, pages=pages, profile=profile, mediaCounts=mediaCounts, media=media, info=info)
+        
+        return adc
+        
+        
+    ##############################################################################################################################
+    ## Media Type Name
+    ##############################################################################################################################
+    def getMediaType(self, row):
+        recRole = row['role']
+        recType = row['type']
+        recFmat = row['format']
+
+        recRole = "Unknown" if recRole is None else recRole
+        recType = "Unknown" if recType is None else recType.title()
+        recFmat = "Unknown" if recFmat is None else recFmat
+
+        subType    = None
+        videos     = ["VHS", "DVD", "NTSC", "PAL", "Blu-ray"]
+        misc       = ["CD-ROM", "CDr", "Transcription"]
+        eps        = ["EP"]
+        singles    = ["Single", "Maxi"]
+        unofficial = ["Unofficial"]
+        if sum([x in recFmat for x in videos]) > 0:
+            subType = "Video"
+        elif sum([x in recFmat for x in misc]) > 0:
+            subType = "Misc"
+        elif sum([x in recFmat for x in eps]) > 0:
+            subType = "EP"
+        elif sum([x in recFmat for x in singles]) > 0:
+            subType = "Single"
+        elif sum([x in recFmat for x in unofficial]) > 0:
+            subType = "Unofficial"
+        else:
+            subType = "Album"
+
+        return " + ".join([recType,recRole,subType])
+    
+    
+    ##############################################################################################################################
+    ## File Info
+    ##############################################################################################################################
+    def getInfo(self):
+        afi = artistDBFileInfoClass(info=self.fInfo)
+        return afi
+    
+    
+
+    ##############################################################################################################################
+    ## Artist Media Counts
+    ##############################################################################################################################
+    def getMediaCounts(self, media):
+        
+        amcc = artistDBMediaCountsClass()
+        
+        credittype = "Releases"
+        if amcc.counts.get(credittype) == None:
+            amcc.counts[credittype] = {}
+        for creditsubtype in media.media.keys():
+            amcc.counts[credittype][creditsubtype] = int(len(media.media[creditsubtype]))
+            
+        return amcc
+
+
+
+class artistDiscogsWebPage(artistDBBase):
     def __init__(self, debug=False):
         super().__init__(debug)
         self.dutils = utilsDiscogs()

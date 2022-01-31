@@ -431,6 +431,161 @@ class dbArtistsSpotifyAPI(dbArtistsBase):
         ts.stop()
             
 
+
+#################################################################################################################################
+# Parse From Discogs API
+#################################################################################################################################
+class dbArtistsDiscogsAPI(dbArtistsBase):
+    def __init__(self, dbArtists):
+        super().__init__(dbArtists)
+        self.setPrimary()
+        self.dbArtists = dbArtists
+        
+        self.artistAlbums = None
+        self.artistTracks = None
+        self.artistsData  = None
+            
+            
+    def parse(self, modVal, expr, force=False, debug=False, quiet=False):
+        ts = timestat("Parsing Raw Pickled Discogs API Primary ModVal={0} Files(expr=\'{1}\', force={2}, debug={3}, quiet={4})".format(modVal, expr, force, debug, quiet))
+        
+        io = fileIO()
+        
+        ########################################################################################
+        # New Files
+        ########################################################################################
+        tsDB = timestat("Finding New Files For ModVal={0}".format(modVal))
+        newFiles = self.getArtistPrimaryFiles(modVal, expr, force=True)        
+        print("Found {0} New Files".format(len(newFiles)))
+        tsDB.stop()
+        if len(newFiles) == 0:            
+            return
+        
+        ########################################################################################
+        # Artist Search Data (No Media)
+        ########################################################################################
+        tsDB = timestat("Loading Artist Search Data For ModVal={0}".format(modVal))
+        artistSearchFilenames = self.getArtistRawFiles(datatype="search", expr=expr, force=True)
+        artistSearchFilename = [x for x in artistSearchFilenames if fileUtil(x).basename == "artistData-{0}".format(modVal)]
+        if len(artistSearchFilename) == 1:
+            artistSearchData = io.get(artistSearchFilename[0])
+        else:
+            raise ValueError("Could not find Discogs API Artist Search Data")
+        tsDB.stop()
+            
+        
+        ########################################################################################
+        # Previous Media Data
+        ########################################################################################
+        tsDB = timestat("Loading Media Metadata For ModVal={0}".format(modVal))
+        previousMetadata = self.disc.getMetadataAlbumData(modVal)
+        tsDB.stop()
+        
+        ########################################################################################
+        # Previous DB Data
+        ########################################################################################
+        if force is True or not fileUtil(self.disc.getDBModValFilename(modVal)).exists:
+            tsDB = timestat("Creating New DB For ModVal={0}".format(modVal))
+            dbdata = Series({})
+            ts.stop()
+        else:
+            tsDB = timestat("Loading ModVal={0} DB Data".format(modVal))
+            dbdata = self.disc.getDBModValData(modVal)
+            tsDB.stop()
+        
+        
+        N = len(newFiles)
+        modValue = 2500 if N >= 5000 else 250
+        nSave = 0
+        tsParse = timestat("Parsing {0} Raw Picked API Files".format(N))
+        for i,ifile in enumerate(newFiles):
+            if (i+1) % modValue == 0 or (i+1) == N:
+                tsParse.update(n=i+1, N=N)
+            dData = io.get(ifile)
+            artistID = fileUtil(ifile).basename
+            try:
+                artistData = artistSearchData.loc[artistID]
+            except:
+                print("Could not find Discogs ID [{0}]".format(artistID))
+                continue
+                
+            artistAPIData = {"Artist": artistData, "Albums": dData}
+            retval = Series({artistID: self.artist.getData(artistAPIData)})
+            if dbdata.get(artistID) is not None:
+                dbdata[artistID] = retval
+            else:
+                dbdata = dbdata.append(retval)
+            nSave += 1
+            
+        if nSave > 0:
+            print("Saving [{0}/{1}] {2} Entries To {3}".format(nSave, len(dbdata), "ID Data", self.disc.getDBModValFilename(modVal)))
+            self.disc.saveDBModValData(modVal=modVal, idata=dbdata)
+        else:
+            print("Not saving any of the new data")
+                
+        ts.stop()
+        
+    
+    def parseSearch(self, modVal, expr=None, force=False, debug=False, quiet=False):
+        ts = timestat("Parsing Discogs Search ModVal={0} Files(expr=\'{1}\', force={2}, debug={3}, quiet={4})".format(modVal, expr, force, debug, quiet))
+                        
+        io = fileIO()
+
+            
+        ########################################################################################
+        # Previous DB Data
+        ########################################################################################
+        if not fileUtil(self.disc.getDBModValFilename(modVal)).exists:
+            tsDB = timestat("Creating New DB For ModVal={0}".format(modVal))
+            dbdata = Series({})
+            ts.stop()
+        else:
+            tsDB = timestat("Loading ModVal={0} DB Data".format(modVal))
+            dbdata = self.disc.getDBModValData(modVal)
+            tsDB.stop()
+            
+        
+        ########################################################################################
+        # Previous Media Data
+        ########################################################################################
+        previousMetadata = self.disc.getMetadataAlbumData(modVal)
+        
+        
+        ########################################################################################
+        # Artist Search Data (No Media)
+        ########################################################################################
+        tsDB = timestat("Loading Artist Search Data For ModVal={0}".format(modVal))
+        artistSearchFilenames = self.getArtistRawFiles(datatype="search", expr=expr, force=True)
+        artistSearchFilename = [x for x in artistSearchFilenames if fileUtil(x).basename == "artistData-{0}".format(modVal)]
+        if len(artistSearchFilename) == 1:
+            artistSearchData = io.get(artistSearchFilename[0])
+        else:
+            raise ValueError("Could not find Discogs API Artist Search Data")
+        tsDB.stop()
+        
+        
+        N = artistSearchData.shape[0]
+        modValue = 5000 if N >= 50000 else 1000
+        nSave = 0
+        tsParse = timestat("Parsing {0} Searched For Discogs API Artists".format(N))
+        Nnew = 0
+        for i,(artistID,artistData) in enumerate(artistSearchData.iterrows()):
+            if (i+1) % modValue == 0 or (i+1) == N:
+                tsParse.update(n=i+1, N=N)
+            if dbdata.get(artistID) is not None:
+                continue
+            artistAPIData = {"Artist": artistData, "Albums": previousMetadata.get(artistID, {})}
+            dbdata = dbdata.append(Series({artistID: self.artist.getData(artistAPIData)}))
+            Nnew += 1
+            
+        if Nnew > 0:
+            print("Saving [{0}/{1}] {2} Entries To {3}".format(len(dbdata), len(dbdata), "ID Data", self.disc.getDBModValFilename(modVal)))
+            self.disc.saveDBModValData(modVal=modVal, idata=dbdata)
+        else:
+            print("Not saving any of the new data")
+                
+        ts.stop()            
+
             
 
 class deezerTrack:

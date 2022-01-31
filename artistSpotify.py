@@ -60,9 +60,12 @@ class artistSpotify(artistDBBase):
                 albumURI     = albumData.get('uri')
                 albumAPI     = albumData.get('href')
                 albumName    = albumData.get('name')
-                albumTracks  = albumData.get('numtracks')
+                albumTracks  = albumData.get('numtracks')                
                 albumDate    = albumData.get('date')
-                albumYear    = to_datetime(albumDate).year if albumDate is not None else None
+                try:
+                    albumYear    = to_datetime(albumDate).year if albumDate is not None else None
+                except:
+                    albumYear    = None
 
                 if all([albumGroup,albumType]):
                     mediaName = " + ".join([albumGroup,albumType])
